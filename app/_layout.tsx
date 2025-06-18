@@ -1,59 +1,65 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Slot } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import '../global.css';
 
-import { useColorScheme } from '@/components/useColorScheme';
+import { SessionProvider } from '../contexts/AuthContext';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { ColorProvider } from '@/contexts/ColorContext';
+import { AlertNotificationRoot } from 'react-native-alert-notification';
+import * as Updates from 'expo-updates';
+import { Provider } from 'react-redux';
+import { store } from '@/store';
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
+// Prevent splash screen from hiding before loading is complete
 SplashScreen.preventAutoHideAsync();
 
+export const unstable_settings = {
+    initialRouteName: './(app)'
+};
+
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
-  });
+    const [loaded] = useFonts({
+        SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf')
+    });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+    useEffect(() => {
+        async function onFetchUpdateAsync() {
+            try {
+                const update = await Updates.checkForUpdateAsync();
+                if (update.isAvailable) {
+                    await Updates.fetchUpdateAsync();
+                    await Updates.reloadAsync();
+                }
+            } catch (error: any) {
+                console.error('Error fetching update:', error);
+            }
+        }
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+        if (loaded) {
+            SplashScreen.hideAsync(); // Hide Splash Screen only after everything loads
+            // onFetchUpdateAsync(); // Optional OTA updates
+        }
+    }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+    if (!loaded) return null; // Prevent rendering until fonts are loaded
 
-  return <RootLayoutNav />;
-}
-
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
-  );
+    return (
+        <GestureHandlerRootView className="flex-1">
+            <AlertNotificationRoot theme="dark">
+                <ColorProvider>
+                    <Provider store={store}>
+                        <SessionProvider>
+                            <SafeAreaProvider>
+                                <Slot />
+                            </SafeAreaProvider>
+                        </SessionProvider>
+                    </Provider>
+                </ColorProvider>
+            </AlertNotificationRoot>
+        </GestureHandlerRootView>
+    );
 }

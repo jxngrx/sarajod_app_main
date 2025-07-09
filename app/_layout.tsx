@@ -13,6 +13,7 @@ import { AlertNotificationRoot } from 'react-native-alert-notification';
 import * as Updates from 'expo-updates';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
+import { ThemeProvider } from '@/contexts/ThemeProvider';
 
 // Prevent splash screen from hiding before loading is complete
 SplashScreen.preventAutoHideAsync();
@@ -50,7 +51,7 @@ export default function RootLayout() {
     return (
         <GestureHandlerRootView className="flex-1">
             <AlertNotificationRoot theme="dark">
-                <ColorProvider>
+                <ThemeProvider>
                     <Provider store={store}>
                         <SessionProvider>
                             <SafeAreaProvider>
@@ -58,7 +59,7 @@ export default function RootLayout() {
                             </SafeAreaProvider>
                         </SessionProvider>
                     </Provider>
-                </ColorProvider>
+                </ThemeProvider>
             </AlertNotificationRoot>
         </GestureHandlerRootView>
     );

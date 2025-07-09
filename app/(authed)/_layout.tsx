@@ -1,28 +1,35 @@
 import { Tabs, usePathname } from 'expo-router';
-import { FontAwesome5 } from '@expo/vector-icons';
-import { Platform, StatusBar, View } from 'react-native';
+import { Feather, FontAwesome5 } from '@expo/vector-icons';
+import { Platform, View } from 'react-native';
+import { useTheme } from '@/contexts/ThemeProvider';
+import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 
 export default function Layout() {
-    const pathname = usePathname(); // Get current screen path
-    const hideTabBar = pathname.includes('masterPass'); // Check if on masterPass screen
+    const pathname = usePathname();
+    const hideTabBar = pathname.includes('masterPass');
+    const { theme } = useTheme();
 
     return (
         <View
             style={{
                 flex: 1,
-                paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+                paddingTop: Platform.OS === 'android' ? 0 : 0
             }}
         >
             <Tabs
                 screenOptions={{
                     headerShown: false,
-                    tabBarActiveTintColor: '#2563EB',
-                    tabBarInactiveTintColor: '#6B7280',
+                    tabBarActiveTintColor: theme.primary,
+                    tabBarInactiveTintColor: theme.textMuted,
                     tabBarStyle: hideTabBar
                         ? { display: 'none' }
                         : {
-                              backgroundColor: '#F9FAFB',
-                          },
+                              backgroundColor: theme.card,
+                              borderTopWidth: 0,
+                              height: wp(20),
+                              paddingTop: Platform.OS === 'ios' ? wp(1) : wp(2),
+                              borderTopColor: theme.divider
+                          }
                 }}
             >
                 <Tabs.Screen
@@ -30,17 +37,29 @@ export default function Layout() {
                     options={{
                         title: 'Home',
                         tabBarIcon: ({ color }) => (
-                            <FontAwesome5 name="home" size={20} color={color} />
-                        ),
+                            <Feather name="home" size={20} color={color} />
+                        )
                     }}
                 />
                 <Tabs.Screen
                     name="requests"
                     options={{
-                        title: 'Requests',
+                        href: null
+                    }}
+                    // options={{
+                    //     title: 'Requests',
+                    //     tabBarIcon: ({ color }) => (
+                    //         <Feather name="clipboard" size={20} color={color} />
+                    //     )
+                    // }}
+                />
+                <Tabs.Screen
+                    name="staff"
+                    options={{
+                        title: 'Your Staff',
                         tabBarIcon: ({ color }) => (
-                            <FontAwesome5 name="clipboard-list" size={20} color={color} />
-                        ),
+                            <Feather name="users" size={20} color={color} />
+                        )
                     }}
                 />
                 <Tabs.Screen
@@ -48,18 +67,11 @@ export default function Layout() {
                     options={{
                         title: 'Settings',
                         tabBarIcon: ({ color }) => (
-                            <FontAwesome5 name="cog" size={20} color={color} />
-                        ),
+                            <Feather name="settings" size={20} color={color} />
+                        )
                     }}
                 />
-                <Tabs.Screen
-                    name="profile"
-                    options={{ href: null }}
-                />
-                <Tabs.Screen
-                    name="masterPass"
-                    options={{ href: null }}
-                />
+                <Tabs.Screen name="masterPass" options={{ href: null }} />
             </Tabs>
         </View>
     );

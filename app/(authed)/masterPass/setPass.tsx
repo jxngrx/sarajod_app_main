@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import {
     KeyboardAvoidingView,
     SafeAreaView,
@@ -19,36 +19,33 @@ import {
 } from 'react-native-responsive-screen';
 import apiService from '@/hooks/useApi';
 import { useNavigation } from '@/hooks/useNavigation';
-import { colorBg } from '@/components/StyleDetailsComponent';
-import { ColorContext } from '@/contexts/ColorContext';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { StatusBar } from 'react-native';
 import StatusBarColor from '@/components/StatusBarColor';
+import { useTheme } from '@/contexts/ThemeProvider';
+import useTrans from '@/hooks/useLanguage';
 
 const MasterPassEntry = () => {
     const [masterPass, setMasterPass] = useState<string[]>(
         new Array(6).fill('')
     );
     const [loading, setLoading] = useState<boolean>(false);
-    const { colorId }: any = useContext(ColorContext);
-    const selectedColor =
-        colorBg.find((color) => color.id === colorId)?.color || '#3B82F6';
     const { navigateTo } = useNavigation();
+    const { theme } = useTheme();
+    const t = useTrans();
+
     const focusRef = React.useRef<(TextInput | null)[]>(
         new Array(6).fill(null)
     );
 
     const handleChange = (index: number, text: string) => {
-        const updatedMasterPass = [...masterPass];
-        updatedMasterPass[index] = text;
+        const updated = [...masterPass];
+        updated[index] = text;
 
-        if (text && index < updatedMasterPass.length - 1) {
-            focusRef.current[index + 1]?.focus();
-        } else if (!text && index > 0) {
-            focusRef.current[index - 1]?.focus();
-        }
+        if (text && index < 5) focusRef.current[index + 1]?.focus();
+        else if (!text && index > 0) focusRef.current[index - 1]?.focus();
 
-        setMasterPass(updatedMasterPass);
+        setMasterPass(updated);
     };
 
     const handleSubmit = () => {
@@ -56,15 +53,15 @@ const MasterPassEntry = () => {
             Toast.show({
                 type: ALERT_TYPE.WARNING,
                 title: 'Warning',
-                textBody: 'Master password cannot be empty.',
+                textBody: t('master_empty_warning'),
                 autoClose: 5000
             });
             return;
         }
 
         Alert.alert(
-            'Are you sure?',
-            `You are about to use this Master Password: ${masterPass.join('')}`,
+            t('master_confirm_title'),
+            `${t('master_confirm_message')} ${masterPass.join('')}`,
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
@@ -81,21 +78,16 @@ const MasterPassEntry = () => {
                                 Toast.show({
                                     type: ALERT_TYPE.SUCCESS,
                                     title: 'Success',
-                                    textBody:
-                                        'Master Password set successfully.',
+                                    textBody: t('master_success'),
                                     autoClose: 5000
                                 });
                                 navigateTo({ pathname: 'HOME' });
-                            } else {
-                                throw new Error('Verification failed');
-                            }
+                            } else throw new Error('Verification failed');
                         } catch (error: any) {
                             Toast.show({
                                 type: ALERT_TYPE.WARNING,
                                 title: 'Warning',
-                                textBody:
-                                    error?.response?.data?.message ||
-                                    'Verification Error',
+                                textBody: t('master_failure'),
                                 autoClose: 5000
                             });
                         } finally {
@@ -108,21 +100,35 @@ const MasterPassEntry = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+            style={[styles.container, { backgroundColor: theme.background }]}
+        >
             <StatusBarColor />
-            <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.keyboardContainer}
                 >
                     <View style={styles.innerContainer}>
                         <View style={styles.titleContainer}>
-                            <Text style={styles.heading}>Final Step</Text>
+                            <Text
+                                style={[
+                                    styles.heading,
+                                    { color: theme.primary }
+                                ]}
+                            >
+                                {t('master_heading')}
+                            </Text>
                         </View>
                         <View style={styles.contentContainer}>
                             <View style={styles.descriptionContainer}>
-                                <Text style={styles.descriptionText}>
-                                    Please enter the 6-digit Master Password
+                                <Text
+                                    style={[
+                                        styles.descriptionText,
+                                        { color: theme.textSecondary }
+                                    ]}
+                                >
+                                    {t('master_description')}
                                 </Text>
                             </View>
                             <View style={styles.inputGroup}>
@@ -132,7 +138,14 @@ const MasterPassEntry = () => {
                                         ref={(el) => {
                                             focusRef.current[index] = el;
                                         }}
-                                        style={styles.otpInput}
+                                        style={[
+                                            styles.otpInput,
+                                            {
+                                                backgroundColor: theme.card,
+                                                color: theme.text,
+                                                borderColor: theme.border
+                                            }
+                                        ]}
                                         keyboardType="numeric"
                                         maxLength={1}
                                         value={masterPass[index]}
@@ -147,7 +160,7 @@ const MasterPassEntry = () => {
                                 onPress={handleSubmit}
                                 style={[
                                     styles.submitButton,
-                                    { backgroundColor: selectedColor }
+                                    { backgroundColor: theme.primary }
                                 ]}
                                 disabled={
                                     loading || masterPass.join('').length < 6
@@ -160,7 +173,7 @@ const MasterPassEntry = () => {
                                     />
                                 ) : (
                                     <Text style={styles.submitText}>
-                                        Submit
+                                        {t('master_submit')}
                                     </Text>
                                 )}
                             </TouchableOpacity>
@@ -174,8 +187,7 @@ const MasterPassEntry = () => {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        backgroundColor: '#f3f4f6'
+        flex: 1
     },
     keyboardContainer: {
         flex: 1
@@ -190,8 +202,7 @@ const styles = StyleSheet.create({
     },
     heading: {
         fontSize: wp('10%'),
-        fontWeight: 'bold',
-        color: '#2563eb'
+        fontWeight: 'bold'
     },
     contentContainer: {
         flex: 1
@@ -201,8 +212,7 @@ const styles = StyleSheet.create({
         marginBottom: hp('5%')
     },
     descriptionText: {
-        fontSize: wp('4.5%'),
-        color: '#374151'
+        fontSize: wp('4.5%')
     },
     inputGroup: {
         flexDirection: 'row',
@@ -211,13 +221,11 @@ const styles = StyleSheet.create({
     },
     otpInput: {
         borderWidth: 1,
-        borderColor: '#d1d5db',
         borderRadius: wp('8%'),
         paddingHorizontal: wp('4%'),
         paddingVertical: hp('1.5%'),
         textAlign: 'center',
         fontSize: wp('5%'),
-        backgroundColor: '#fff',
         width: wp('12%')
     },
     submitButton: {

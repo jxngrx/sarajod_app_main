@@ -1,11 +1,7 @@
-import { Image, Text, View } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { Redirect } from 'expo-router';
-import { useSession } from '../../contexts/AuthContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useState, useEffect, useCallback } from 'react';
-import apiService from '@/hooks/useApi';
 import * as SplashScreen from 'expo-splash-screen';
-import Logo from '@/assets/images/icon.png';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -13,51 +9,66 @@ import Animated, {
     withRepeat,
     Easing
 } from 'react-native-reanimated';
-import { fetchUserDetails, selectUser } from '@/store/slices/userSlice';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { useSession } from '../../contexts/AuthContext';
+import apiService from '@/hooks/useApi';
+import { useAppDispatch } from '@/store/hooks';
+import {
+    fetchAllTransactions,
+    fetchUserDetails
+} from '@/store/slices/userSlice';
+
+import Logo from '@/assets/images/icon.png';
+import {
+    widthPercentageToDP as wp,
+    heightPercentageToDP as hp
+} from 'react-native-responsive-screen';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function AppLayout() {
-    const scale = useSharedValue(1);
-    const { session } = useSession();
+    const { session, signOut } = useSession();
     const dispatch = useAppDispatch();
     const [appReady, setAppReady] = useState(false);
     const [hasSeenWelcome, setHasSeenWelcome] = useState<boolean | null>(null);
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scale.value }]
-    }));
     const [isMasterPassSet, setIsMasterPassSet] = useState<boolean | null>(
         null
     );
 
+    const scale = useSharedValue(1);
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }]
+    }));
+
+    const startScaleAnimation = () => {
+        scale.value = withRepeat(
+            withTiming(1.2, {
+                duration: 1000,
+                easing: Easing.inOut(Easing.ease)
+            }),
+            -1,
+            true
+        );
+    };
+
     const fetchData = useCallback(async () => {
         try {
-            const userToken = session;
             const seenWelcome = await AsyncStorage.getItem('hasSeenWelcome');
+            setHasSeenWelcome(seenWelcome === 'true');
 
-            setHasSeenWelcome(seenWelcome === 'true'); // ✅ always set this
-
-            if (userToken) {
-                const response = await apiService.isMasterPass();
-                setIsMasterPassSet(response.status === 200);
-                const user = await dispatch(fetchUserDetails());
+            if (session) {
+                setIsMasterPassSet(true);
             } else {
                 setIsMasterPassSet(false);
             }
         } catch (error) {
-            console.log('Startup error:', error);
+            console.error('App startup error:', error);
+            setIsMasterPassSet(false);
         } finally {
             setAppReady(true);
             await SplashScreen.hideAsync();
-            scale.value = withRepeat(
-                withTiming(1.2, {
-                    duration: 1000,
-                    easing: Easing.inOut(Easing.ease)
-                }),
-                -1,
-                true
-            );
+            startScaleAnimation();
         }
     }, [session]);
 
@@ -65,32 +76,42 @@ export default function AppLayout() {
         fetchData();
     }, [fetchData]);
 
+    // Still loading
     if (!appReady || isMasterPassSet === null || hasSeenWelcome === null) {
         return (
-            <View className="flex items-center justify-center bg-white h-screen w-full">
+            <View style={styles.container}>
                 <Animated.Image
-                    className="rounded-2xl h-[20%] w-[40%] object-cover"
                     source={Logo}
-                    style={animatedStyle}
+                    style={[styles.logo, animatedStyle]}
+                    resizeMode="contain"
                 />
-                <Text className="text-black">Loading...</Text>
+                <Text style={styles.loadingText}>Loading...</Text>
             </View>
         );
     }
 
-    if (session === null) {
-        return <Redirect href="../welcome" />;
-    }
+    // No session, redirect to home
+    if (!session) return <Redirect href="/welcome" />;
 
-    // if (!hasSeenWelcome) {
-    //     return <Redirect href="./welcome" />;
-    // }
-
-    if (!isMasterPassSet) {
-        return <Redirect href="./set-master-pass" />;
-    }
-
-    if (session && isMasterPassSet) {
-        return <Redirect href="./masterPass/entryPass" />;
-    }
+    // Session present and master pass is set
+    return <Redirect href="/(authed)/masterPass/entryPass" />;
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#ffffff'
+    },
+    logo: {
+        width: wp('40%'),
+        height: hp('20%'),
+        borderRadius: wp('5%')
+    },
+    loadingText: {
+        marginTop: hp('2%'),
+        fontSize: wp('4%'),
+        color: '#000000'
+    }
+});

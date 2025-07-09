@@ -3,7 +3,7 @@
     "name": "sarajod",
     "slug": "sarajod",
     "version": "1.0.0",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/SARAJOD-LOGO.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/SARAJOD-LOGO.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
@@ -25,7 +25,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/SARAJOD-LOGO.png"
     },
     "plugins": [
       "expo-router",

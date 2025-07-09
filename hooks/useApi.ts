@@ -51,7 +51,18 @@ const apiService = {
         api.post('/auth/validate-master-password', masterPassValues),
     regitserMasterPass: (masterPassValues: { masterPass: string }) =>
         api.post('/auth/set-master-password', masterPassValues),
-
+    requestOtpForgetPass: (email: any) =>
+        api.post('/auth/forget-password', email),
+    resetPassVerify: (payload: {
+        email: string;
+        otp: string;
+        newPassword: string;
+    }) => api.post('/auth/forget-password-verify', payload),
+    updatePasswordWithOtp: (payload: {
+        email: string;
+        otp: string;
+        newPassword: string;
+    }) => api.post('/auth/forget-password-verify', payload),
 
     // Email Routes
     handleContactUsForm: (contactData: {
@@ -62,6 +73,7 @@ const apiService = {
 
     // Detail Routes
     getUserDetails: () => api.get('/user/details'),
+    getRefreshToken: () => api.get('/user/refreshToken'),
     updateUserAvatar: (id: string, request: {}) =>
         api.post(`/user/avatar/${id}`, request),
     updateUser: (email: string) => api.post(`/user/update/${email}`),
@@ -76,7 +88,41 @@ const apiService = {
     createProfile: (profileData: {
         profileName: string;
         profileNumber: string;
-    }) => api.post('/user/create-profile', profileData)
+    }) => api.post('/user/create-profile', profileData),
+
+    //Transaction
+    startTransaction: (transactionData: {
+        profileId: string;
+        transactionCollectionId: string;
+        partnerName: string;
+        partnerEmail: string;
+        partnerPhoneNumber: string;
+        active: boolean;
+    }) => api.post('/transaction/create-transaction-table', transactionData),
+    createTransaction: (transactionPayload: any) =>
+        api.post('/transaction/create-transaction', transactionPayload),
+    updateTransaction: (transactionId: string, transactionPayload: any) =>
+        api.post(
+            `/transaction/update-transaction/${transactionId}`,
+            transactionPayload
+        ),
+    getAllTransaction: (profileId: any) =>
+        api.post('/transaction/transactions', { profileId }),
+
+    deleteTransaction: (transactionAmountDetailId: string, profileId: any) =>
+        api.delete(
+            `/transaction/transaction/${transactionAmountDetailId}/${profileId}`
+        ),
+    deleteTransactionTable: (transactionTableId: string, profileId: string) =>
+        api.delete(
+            `/transaction/transaction-table/${transactionTableId}/profile/${profileId}`
+        ),
+
+    //Staff
+    addStaffMember: (payload: any) => api.post('/staff', payload),
+    getAllStaff: (profileId: any) => api.get(`/staff/${profileId}`),
+    payStaffMember: (payload: any) => api.post('/staff/salary', payload),
+    deleteStaffMember: (staffId: any) => api.delete(`/staff/${staffId}`)
 };
 
 export default apiService;

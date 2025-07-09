@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     KeyboardAvoidingView,
     SafeAreaView,
@@ -10,25 +10,37 @@ import {
     ActivityIndicator,
     Keyboard,
     TouchableWithoutFeedback,
-    Alert
+    StyleSheet
 } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { useRoute } from '@react-navigation/native';
-import apiService from '@/hooks/useApi';
-import { useNavigation } from '@/hooks/useNavigation';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { router } from 'expo-router';
-import { StatusBar } from 'react-native';
+import { useNavigation } from '@/hooks/useNavigation';
+import apiService from '@/hooks/useApi';
+import { useTheme } from '@/contexts/ThemeProvider';
 import StatusBarColor from '@/components/StatusBarColor';
+import {
+    widthPercentageToDP as wp,
+    heightPercentageToDP as hp
+} from 'react-native-responsive-screen';
+import {
+    fetchAllTransactions,
+    fetchUserDetails
+} from '@/store/slices/userSlice';
+import { useAppDispatch } from '@/store/hooks';
+import useTrans from '@/hooks/useLanguage';
 
 const MasterPassEntry = () => {
     const [masterPass, setMasterPass] = useState<string[]>(
         new Array(6).fill('')
     );
-    const [loading, setLoading] = useState<boolean>(false);
+    const [loading, setLoading] = useState(false);
     const [biometricType, setBiometricType] = useState<string | null>(null);
-
+    const t = useTrans();
+    const { theme } = useTheme();
     const route = useRoute();
+    const dispatch = useAppDispatch();
     const { email } = route.params as { email: string };
     const { navigateTo } = useNavigation();
 
@@ -79,21 +91,23 @@ const MasterPassEntry = () => {
             });
             router.replace('./home');
         } else {
-            Alert.alert('Authentication Failed', 'Please try again.');
+            Toast.show({
+                type: ALERT_TYPE.WARNING,
+                title: 'Failed',
+                textBody: 'Authentication Failed',
+                autoClose: 4000
+            });
         }
     };
 
     const handleChange = (index: number, text: string) => {
-        const updatedMasterPass = [...masterPass];
-        updatedMasterPass[index] = text;
+        const updated = [...masterPass];
+        updated[index] = text;
 
-        if (text && index < updatedMasterPass.length - 1) {
-            focusRef.current[index + 1]?.focus();
-        } else if (!text && index > 0) {
-            focusRef.current[index - 1]?.focus();
-        }
+        if (text && index < 5) focusRef.current[index + 1]?.focus();
+        else if (!text && index > 0) focusRef.current[index - 1]?.focus();
 
-        setMasterPass(updatedMasterPass);
+        setMasterPass(updated);
     };
 
     const handleSubmit = async () => {
@@ -106,11 +120,11 @@ const MasterPassEntry = () => {
             });
             return;
         }
+
         setLoading(true);
         try {
-            const masterPassCode = Number(masterPass.join(''));
             const response = await apiService.validateMasterPass({
-                masterPass: masterPassCode
+                masterPass: Number(masterPass.join(''))
             });
 
             if (response.status === 200) {
@@ -122,15 +136,15 @@ const MasterPassEntry = () => {
                 });
                 router.replace('./home');
             } else {
-                throw new Error('Verification failed');
+                throw new Error();
             }
         } catch (error: any) {
-            const errorMessage =
+            const message =
                 error?.response?.data?.message || 'Verification Error';
             Toast.show({
                 type: ALERT_TYPE.WARNING,
-                title: 'Warning',
-                textBody: errorMessage,
+                title: 'Error',
+                textBody: message,
                 autoClose: 5000
             });
         } finally {
@@ -138,91 +152,186 @@ const MasterPassEntry = () => {
         }
     };
 
+    useEffect(() => {
+        const handleMasterPassCheck = async () => {
+            try {
+                const response = await apiService.isMasterPass();
+                const isSet = response.status === 200;
+                if (isSet) {
+                    await Promise.all([
+                        dispatch(fetchUserDetails()),
+                        dispatch(fetchAllTransactions())
+                    ]);
+                } else {
+                    navigateTo({
+                        pathname: 'SETPASS'
+                    });
+                }
+            } catch (err: any) {
+                const status = err?.response?.status;
+                const message = err?.response?.data?.message || '';
+                if (status === 400 && message === 'Master password not set.') {
+                    navigateTo({
+                        pathname: 'SETPASS'
+                    });
+                }
+            }
+        };
+        handleMasterPassCheck();
+    });
+
     return (
-        <SafeAreaView className="flex-1 bg-gray-100">
+        <SafeAreaView
+            style={[styles.container, { backgroundColor: theme.background }]}
+        >
             <StatusBarColor />
-            <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    className="flex-1"
+                    style={styles.flex}
                 >
-                    <View className="flex-1 px-6">
-                        <View className="items-start mt-16">
-                            <Text className="text-5xl font-bold text-blue-600">
-                                Welcome Back
-                            </Text>
-                        </View>
-                        <View className="flex-1">
-                            <View className="my-8 mb-10">
-                                <Text className="text-xl text-gray-700">
-                                    Please enter the 6-digit Master Password
-                                </Text>
-                            </View>
-                            <View className="flex-row justify-between mb-6">
-                                {masterPass.map((_, index) => (
-                                    <TextInput
-                                        key={index}
-                                        ref={(el) => {
-                                            focusRef.current[index] = el;
-                                        }}
-                                        className="border border-gray-300 rounded-lg p-4 text-center text-xl bg-white w-14"
-                                        keyboardType="numeric"
-                                        maxLength={1}
-                                        value={masterPass[index]}
-                                        onChangeText={(text) =>
-                                            handleChange(index, text)
-                                        }
-                                        autoFocus={index === 0}
-                                    />
-                                ))}
-                            </View>
-                            <TouchableOpacity
-                                onPress={handleSubmit}
-                                className={`bg-blue-500 rounded-lg py-3 mt-6 shadow-sm`}
-                                disabled={
-                                    loading || masterPass.join('').length < 6
-                                }
-                            >
-                                {loading ? (
-                                    <ActivityIndicator
-                                        size="small"
-                                        color="#ffffff"
-                                    />
-                                ) : (
-                                    <Text className="text-white text-lg font-semibold text-center">
-                                        Confirm
-                                    </Text>
-                                )}
-                            </TouchableOpacity>
+                    <View style={styles.innerContainer}>
+                        <Text style={[styles.title, { color: theme.primary }]}>
+                            {t('master_welcome_back')}
+                        </Text>
 
-                            {biometricType && (
-                                <TouchableOpacity
-                                    onPress={handleBiometricAuth}
-                                    className="bg-blue-500 rounded-lg py-3 mt-4 shadow-sm"
-                                >
-                                    <Text className="text-white text-lg font-semibold text-center">
-                                        Use {biometricType}
-                                    </Text>
-                                </TouchableOpacity>
-                            )}
-                            <TouchableOpacity
-                                    onPress={()=>{
-                                        navigateTo({
-                                            pathname: "FORGETPASS"
-                                        })
+                        <Text
+                            style={[styles.subText, { color: theme.textMuted }]}
+                        >
+                            {t('master_instruction')}
+                        </Text>
+
+                        <View style={styles.otpContainer}>
+                            {masterPass.map((_, index) => (
+                                <TextInput
+                                    key={index}
+                                    ref={(el) => {
+                                        focusRef.current[index] = el;
                                     }}
-                                    className="rounded-lg py-3 mt-4 shadow-sm"
-                                >
-                                    <Text className="text-black underline text-lg font-semibold text-center">
-                                        Forget password
-                                    </Text>
-                                </TouchableOpacity>
+                                    style={[
+                                        styles.otpInput,
+                                        {
+                                            borderColor: theme.border,
+                                            backgroundColor: theme.card,
+                                            color: theme.text
+                                        }
+                                    ]}
+                                    keyboardType="numeric"
+                                    maxLength={1}
+                                    value={masterPass[index]}
+                                    onChangeText={(text) =>
+                                        handleChange(index, text)
+                                    }
+                                    autoFocus={index === 0}
+                                />
+                            ))}
                         </View>
+
+                        <TouchableOpacity
+                            onPress={handleSubmit}
+                            style={[
+                                styles.button,
+                                { backgroundColor: theme.primary }
+                            ]}
+                            disabled={loading || masterPass.join('').length < 6}
+                        >
+                            {loading ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                                <Text style={styles.buttonText}>
+                                    {t('master_confirm')}
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+
+                        {biometricType && (
+                            <TouchableOpacity
+                                onPress={handleBiometricAuth}
+                                style={[
+                                    styles.button,
+                                    {
+                                        backgroundColor: theme.primary,
+                                        marginTop: hp(2)
+                                    }
+                                ]}
+                            >
+                                <Text style={styles.buttonText}>
+                                    {t('master_use_bio')}
+                                    {biometricType}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+
+                        <TouchableOpacity
+                            onPress={() =>
+                                navigateTo({ pathname: 'FORGETPASS' })
+                            }
+                            style={{ marginTop: hp(2) }}
+                        >
+                            <Text
+                                style={{
+                                    color: theme.text,
+                                    textAlign: 'center',
+                                    textDecorationLine: 'underline',
+                                    fontWeight: '600',
+                                    fontSize: hp(2.1)
+                                }}
+                            >
+                                {t('master_forgot_pass')}
+                            </Text>
+                        </TouchableOpacity>
                     </View>
                 </KeyboardAvoidingView>
             </TouchableWithoutFeedback>
         </SafeAreaView>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1
+    },
+    flex: {
+        flex: 1
+    },
+    innerContainer: {
+        flex: 1,
+        paddingHorizontal: wp(6),
+        marginTop: hp(10)
+    },
+    title: {
+        fontSize: wp(10),
+        fontWeight: 'bold',
+        marginBottom: hp(3)
+    },
+    subText: {
+        fontSize: wp(4.5),
+        marginBottom: hp(6)
+    },
+    otpContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: hp(3)
+    },
+    otpInput: {
+        borderWidth: 1,
+        borderRadius: wp(2),
+        padding: wp(3),
+        textAlign: 'center',
+        fontSize: wp(5),
+        width: wp(12)
+    },
+    button: {
+        borderRadius: wp(2),
+        paddingVertical: hp(2),
+        marginTop: hp(1.5),
+        alignItems: 'center'
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: wp(4.5),
+        fontWeight: '600'
+    }
+});
 
 export default MasterPassEntry;

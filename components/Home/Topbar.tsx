@@ -77,14 +77,14 @@ const TopBar = () => {
             )}
             <TouchableOpacity
                 onPress={() => {
-                    signOut();
+                    // signOut();
                     navigateTo({
-                        pathname: 'WELCOME'
+                        pathname: 'ENTRYPASS'
                     });
                 }}
                 style={styles.bellButton}
             >
-                <FontAwesome5 name="bell" size={24} color={'white'} />
+                <FontAwesome5 name="lock" size={24} color={'white'} />
             </TouchableOpacity>
 
             {bottomSheetRef && (

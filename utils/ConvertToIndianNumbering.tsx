@@ -6,7 +6,7 @@ export const convertToIndianNumbering = (num: number) => {
         formattedNumber = (num / 10000000).toFixed(1) + ' Cr'; // Crores
     }
     // Check if number is in Lakhs (>= 1 Lakh)
-    else if (num >= 100000) {
+    else if (num >= 1000000) {
         formattedNumber = (num / 100000).toFixed(1) + ' L'; // Lakhs
     } else if (num <= 0) {
         formattedNumber = String(0);

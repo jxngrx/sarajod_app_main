@@ -50,3 +50,31 @@ export interface UserContextType {
     setUser: (user: User | null) => void;
     fetchUserDetails: () => Promise<void>;
 }
+
+export interface Staff {
+    _id: string;
+    user: string;
+    name: string;
+    profileId: string;
+    role: string;
+    salary: number;
+    salaryCycle: string;
+    joiningDate: string;
+    isActive: boolean;
+    contactInfo: {
+        phone: string;
+    };
+    salaryHistory: salaryHistory[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface salaryHistory {
+    _id: string;
+    staffMember: string;
+    amount: number;
+    paymentDate: string;
+    status: string;
+    transaction: string;
+    updatedAt: string;
+}

@@ -8,12 +8,12 @@ export enum Routes {
     REGISTER = '/register',
     OTP = '/otp',
     HOME = '/home',
-    PROFILE = '/profile',
     REQUESTS = '/requests',
     SETTING = '/settings',
     SETPASS = '/masterPass/setPass',
     ENTRYPASS = '/masterPass/entryPass',
-    FORGETPASS = '/forgetPass'
+    FORGETPASS = '/forgetPass',
+    TRANSACTIONDETAIL = '/TransactionScreen'
 }
 
 // Interface specifying configuration for each route
@@ -28,7 +28,6 @@ export interface RoutesConfig {
         phoneNumber: string;
     };
     HOME: undefined;
-    PROFILE: undefined;
     REQUESTS: undefined;
     SETTING: undefined;
     SETPASS: {
@@ -36,6 +35,9 @@ export interface RoutesConfig {
     };
     ENTRYPASS: undefined;
     FORGETPASS: undefined;
+    TRANSACTIONDETAIL: {
+        data: string;
+    };
 }
 
 // Type representing route names

@@ -1,9 +1,4 @@
-import { colorBg } from '@/components/StyleDetailsComponent';
-import { ColorContext } from '@/contexts/ColorContext';
-import apiService from '@/hooks/useApi';
-import { useNavigation } from '@/hooks/useNavigation';
-import React, { useContext, useState } from 'react';
-import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
+import React, { useState } from 'react';
 import {
     KeyboardAvoidingView,
     Platform,
@@ -15,29 +10,34 @@ import {
     Keyboard,
     ScrollView,
     ActivityIndicator,
-    StyleSheet
+    StyleSheet,
+    Image
 } from 'react-native';
 import {
     widthPercentageToDP as wp,
     heightPercentageToDP as hp
 } from 'react-native-responsive-screen';
+import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
+import { useNavigation } from '@/hooks/useNavigation';
+import apiService from '@/hooks/useApi';
+import appLogo from '@/assets/SARAJOD-LOGO.png';
+import { useTheme } from '@/contexts/ThemeProvider';
+import useTrans from '@/hooks/useLanguage';
 
 const Register = () => {
+    const { navigateTo } = useNavigation();
+    const t = useTrans();
+    const { theme } = useTheme();
     const [userEmail, setUserEmail] = useState('');
     const [userName, setUserName] = useState('');
     const [userPhoneNumber, setUserPhoneNumber] = useState('');
     const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState({
+    const [errorDupli, setErrorDupli] = useState('');
+    const [errors, setErrors] = useState<any>({
         name: '',
         phoneNumber: '',
         email: ''
     });
-    const [errorDupli, setErrorDupli] = useState('');
-    const { navigateTo } = useNavigation();
-    const { colorId }: any = useContext(ColorContext);
-
-    const selectedColor =
-        colorBg.find((color) => color.id === colorId)?.color || 'bg-blue-500';
 
     const validateEmail = (email: string) =>
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -54,13 +54,12 @@ const Register = () => {
         }
 
         if (!validatePhoneNumber(userPhoneNumber)) {
-            newErrors.phoneNumber =
-                'Please enter a valid 10-digit phone number.';
+            newErrors.phoneNumber = 'Enter a valid 10-digit phone number.';
             isValid = false;
         }
 
         if (!validateEmail(userEmail)) {
-            newErrors.email = 'Please enter a valid email address.';
+            newErrors.email = 'Enter a valid email address.';
             isValid = false;
         }
 
@@ -84,8 +83,9 @@ const Register = () => {
                     type: ALERT_TYPE.SUCCESS,
                     title: 'Success',
                     textBody: response.data.message,
-                    autoClose: 5000
+                    autoClose: 3000
                 });
+
                 navigateTo({
                     pathname: 'OTP',
                     params: {
@@ -104,7 +104,7 @@ const Register = () => {
                 type: ALERT_TYPE.WARNING,
                 title: 'Warning',
                 textBody: errorMessage,
-                autoClose: 5000
+                autoClose: 3000
             });
         } finally {
             setLoading(false);
@@ -112,116 +112,143 @@ const Register = () => {
     };
 
     return (
-        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.flex}
+                style={{ flex: 1 }}
             >
                 <ScrollView
-                    contentContainerStyle={styles.flexGrow}
+                    contentContainerStyle={{ flexGrow: 1 }}
                     keyboardShouldPersistTaps="handled"
                 >
-                    <View style={styles.flex}>
+                    <View
+                        style={{ flex: 1, backgroundColor: theme.background }}
+                    >
                         <View style={styles.headerContainer}>
-                            <View style={styles.absoluteHeaderWrapper}>
-                                <Text style={styles.bigText}>
-                                    Sarajod Sa rajod Saraj od Sarajod Sarajod Sa
-                                    rajod Saraj od Sarajod Sarajod Sa rajod
-                                    Saraj
-                                </Text>
-                            </View>
+                            <Image
+                                source={appLogo}
+                                height={200}
+                                width={200}
+                                style={{
+                                    height: hp('30%'),
+                                    width: wp('80%'),
+                                    resizeMode: 'contain'
+                                }}
+                            />
                         </View>
 
-                        {errorDupli ? (
-                            <Text style={styles.duplicateError}>
+                        {errorDupli && (
+                            <Text
+                                style={[
+                                    styles.duplicateError,
+                                    { color: theme.danger }
+                                ]}
+                            >
                                 {errorDupli}
                             </Text>
-                        ) : null}
+                        )}
 
-                        <View style={styles.formContainer}>
-                            <Text style={styles.registerTitle}>Register</Text>
+                        <View
+                            style={[
+                                styles.formContainer,
+                                { backgroundColor: theme.surface }
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    styles.registerTitle,
+                                    { color: theme.primary }
+                                ]}
+                            >
+                                {t('register_title')}
+                            </Text>
 
-                            {['Name', 'phone number', 'email address'].map(
-                                (label, index) => {
-                                    const key =
-                                        label === 'Name'
-                                            ? 'name'
-                                            : label === 'phone number'
-                                            ? 'phoneNumber'
-                                            : 'email';
-                                    return (
-                                        <View key={index}>
-                                            <Text style={styles.labelText}>
-                                                Enter your {label}
-                                            </Text>
-                                            <TextInput
-                                                style={[
-                                                    styles.textInput,
-                                                    errors[key] &&
-                                                        styles.inputError
-                                                ]}
-                                                keyboardType={
-                                                    label === 'phone number'
-                                                        ? 'numeric'
-                                                        : label ===
-                                                          'email address'
-                                                        ? 'email-address'
-                                                        : 'default'
-                                                }
-                                                value={
-                                                    label === 'Name'
-                                                        ? userName
-                                                        : label ===
-                                                          'phone number'
-                                                        ? userPhoneNumber
-                                                        : userEmail
-                                                }
-                                                onChangeText={(text) => {
-                                                    if (label === 'Name')
-                                                        setUserName(text);
-                                                    else if (
-                                                        label === 'phone number'
-                                                    )
-                                                        setUserPhoneNumber(
-                                                            text
-                                                        );
-                                                    else setUserEmail(text);
-                                                }}
-                                                placeholder={
-                                                    label === 'Name'
-                                                        ? 'Sarajod'
-                                                        : label ===
-                                                          'phone number'
-                                                        ? '9999999999'
-                                                        : 'your.email@example.com'
-                                                }
-                                                placeholderTextColor="gray"
-                                            />
-                                            {errors[key] && (
-                                                <Text style={styles.errorText}>
-                                                    {errors[key]}
-                                                </Text>
-                                            )}
-                                        </View>
-                                    );
+                            {[
+                                {
+                                    label: t('enter_name'),
+                                    value: userName,
+                                    setter: setUserName,
+                                    key: 'name',
+                                    placeholder: 'Sarajod',
+                                    keyboard: 'default'
+                                },
+                                {
+                                    label: t('enter_phone'),
+                                    value: userPhoneNumber,
+                                    setter: setUserPhoneNumber,
+                                    key: 'phoneNumber',
+                                    placeholder: '9999999999',
+                                    keyboard: 'numeric'
+                                },
+                                {
+                                    label: t('enter_email'),
+                                    value: userEmail,
+                                    setter: setUserEmail,
+                                    key: 'email',
+                                    placeholder: 'your.email@example.com',
+                                    keyboard: 'email-address'
                                 }
-                            )}
+                            ].map((field, index) => (
+                                <View key={index}>
+                                    <Text
+                                        style={[
+                                            styles.labelText,
+                                            { color: theme.text }
+                                        ]}
+                                    >
+                                        {field.label}
+                                    </Text>
+                                    <TextInput
+                                        style={[
+                                            styles.textInput,
+                                            {
+                                                color: theme.text,
+                                                borderColor: errors[field.key]
+                                                    ? theme.danger
+                                                    : theme.border
+                                            }
+                                        ]}
+                                        placeholder={field.placeholder}
+                                        placeholderTextColor={theme.textMuted}
+                                        value={field.value}
+                                        keyboardType={
+                                            field.label === 'phone number'
+                                                ? 'numeric'
+                                                : field.label ===
+                                                  'email address'
+                                                ? 'email-address'
+                                                : 'default'
+                                        }
+                                        onChangeText={field.setter}
+                                    />
+                                    {errors[field.key] && (
+                                        <Text
+                                            style={[
+                                                styles.errorText,
+                                                { color: theme.danger }
+                                            ]}
+                                        >
+                                            {errors[field.key]}
+                                        </Text>
+                                    )}
+                                </View>
+                            ))}
 
                             <TouchableOpacity
                                 onPress={handleNavigateToOTP}
                                 style={[
                                     styles.otpButton,
-                                    styles['bg-blue-500']
+                                    { backgroundColor: theme.primary }
                                 ]}
                             >
                                 {loading ? (
                                     <ActivityIndicator
-                                        size={'small'}
-                                        color={'#ffffff'}
+                                        size="small"
+                                        color="#ffffff"
                                     />
                                 ) : (
                                     <Text style={styles.otpButtonText}>
-                                        Send OTP
+                                        {t('send_otp')}
                                     </Text>
                                 )}
                             </TouchableOpacity>
@@ -233,11 +260,21 @@ const Register = () => {
                                     }
                                     style={styles.loginTextWrapper}
                                 >
-                                    <Text style={styles.loginText}>
-                                        Already have an account?{' '}
+                                    <Text
+                                        style={[
+                                            styles.loginText,
+                                            { color: theme.textSecondary }
+                                        ]}
+                                    >
+                                        {t('already_have_account')}{' '}
                                     </Text>
-                                    <Text style={styles.loginTextBold}>
-                                        Login
+                                    <Text
+                                        style={[
+                                            styles.loginTextBold,
+                                            { color: theme.primary }
+                                        ]}
+                                    >
+                                        {t('login')}
                                     </Text>
                                 </TouchableOpacity>
                             </View>
@@ -250,117 +287,75 @@ const Register = () => {
 };
 
 const styles = StyleSheet.create({
-    flex: {
-        flex: 1
-    },
-    flexGrow: {
-        flexGrow: 1
-    },
     headerContainer: {
         alignItems: 'center',
-        marginTop: hp('4%')
-    },
-    absoluteHeaderWrapper: {
-        position: 'absolute',
-        width: '100%',
-        alignItems: 'center',
-        padding: 0
+        marginTop: hp(4)
     },
     bigText: {
-        width: '100%',
-        left: 0,
-        top: -hp('6%'),
+        fontSize: hp(11),
         fontWeight: '600',
-        textAlign: 'center',
-        fontSize: hp('11%'),
-        color: '#e5e7eb'
+        textAlign: 'center'
     },
     duplicateError: {
-        color: '#f43f5e',
         fontWeight: '600',
-        marginTop: hp('2%'),
-        textAlign: 'center'
+        textAlign: 'center',
+        marginTop: hp(2)
     },
     formContainer: {
         position: 'absolute',
-        width: '100%',
         bottom: 0,
-        flex: 1,
-        justifyContent: 'center',
-        padding: wp('6%'),
-        paddingBottom: hp('8%'),
-        paddingTop: hp('5%'),
-        borderTopLeftRadius: 40,
-        borderTopRightRadius: 40,
-        backgroundColor: 'white'
+        width: '100%',
+        borderTopLeftRadius: wp(10),
+        borderTopRightRadius: wp(10),
+        padding: wp(6),
+        paddingBottom: hp(8)
     },
     registerTitle: {
-        position: 'absolute',
-        top: -hp('7.5%'),
-        left: wp(5),
-        fontSize: hp('7%'),
-        fontWeight: 'bold',
-        color: '#1d4ed8'
+        marginBottom: wp(3),
+        fontSize: hp(6.5),
+        fontWeight: 'bold'
     },
     labelText: {
-        fontSize: hp('2.2%'),
-        color: '#4b5563',
-        marginBottom: hp('0.5%')
+        fontSize: hp(2),
+        marginBottom: hp(0.8)
     },
     textInput: {
         width: '100%',
         borderWidth: 1,
-        borderColor: '#d1d5db',
-        borderRadius: wp('4%'),
-        paddingHorizontal: wp('5%'),
-        paddingVertical: hp('2%'),
-        fontSize: hp('2.2%'),
-        color: '#1f2937',
-        marginBottom: hp('1.5%')
-    },
-    inputError: {
-        borderColor: '#ef4444'
+        borderRadius: wp(4),
+        paddingHorizontal: wp(5),
+        paddingVertical: hp(1.8),
+        fontSize: hp(2.2),
+        marginBottom: hp(1)
     },
     errorText: {
-        color: '#ef4444',
-        fontSize: hp('1.6%'),
-        marginBottom: hp('1.2%')
+        fontSize: hp(1.6),
+        marginBottom: hp(1)
     },
     otpButton: {
-        borderRadius: wp('2%'),
-        paddingVertical: hp('1.6%'),
-        marginBottom: hp('2%'),
-        shadowColor: '#000'
+        borderRadius: wp(3),
+        paddingVertical: hp(2),
+        marginTop: hp(2)
     },
     otpButtonText: {
         color: 'white',
-        fontSize: hp('2.2%'),
+        textAlign: 'center',
         fontWeight: '600',
-        textAlign: 'center'
+        fontSize: hp(2.2)
     },
     loginContainer: {
         alignItems: 'center'
     },
     loginTextWrapper: {
         flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: hp('1%')
+        marginTop: hp(1.5)
     },
     loginText: {
-        color: '#4b5563'
+        fontSize: hp(1.8)
     },
     loginTextBold: {
-        color: '#2563eb',
-        fontWeight: '600'
-    },
-    'bg-blue-500': {
-        backgroundColor: '#3b82f6'
-    },
-    'bg-red-500': {
-        backgroundColor: '#ef4444'
-    },
-    'bg-green-500': {
-        backgroundColor: '#10b981'
+        fontWeight: '600',
+        fontSize: hp(1.8)
     }
 });
 

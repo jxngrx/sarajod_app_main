@@ -1,21 +1,67 @@
 {
-  "cli": {
-    "version": ">= 15.0.12",
-    "appVersionSource": "remote"
-  },
-  "build": {
-    "development": {
-      "developmentClient": true,
-      "distribution": "internal"
+    "cli": {
+        "version": ">= 15.0.12",
+        "appVersionSource": "remote"
     },
-    "preview": {
-      "distribution": "internal"
+    "build": {
+        "development": {
+            "developmentClient": true,
+            "distribution": "internal",
+            "android": {
+                "buildType": "apk"
+            },
+            "ios": {
+                "simulator": false
+            },
+            "channel": "development",
+            "cache": {
+                "disabled": false
+            }
+        },
+        "preview": {
+            "developmentClient": false,
+            "distribution": "internal",
+            "android": {
+                "buildType": "apk"
+            },
+            "ios": {
+                "simulator": false
+            },
+            "channel": "preview",
+            "cache": {
+                "disabled": false
+            }
+        },
+        "testflight": {
+            "developmentClient": false,
+            "distribution": "store",
+            "android": {
+                "buildType": "app-bundle"
+            },
+            "ios": {
+                "simulator": false
+            },
+            "channel": "testflight",
+            "cache": {
+                "disabled": false
+            }
+        },
+        "production": {
+            "developmentClient": false,
+            "distribution": "store",
+            "android": {
+                "buildType": "app-bundle"
+            },
+            "ios": {
+                "simulator": false
+            },
+            "channel": "production",
+            "cache": {
+                "disabled": false
+            }
+        }
     },
-    "production": {
-      "autoIncrement": true
+    "submit": {
+        "production": {}
     }
-  },
-  "submit": {
-    "production": {}
-  }
 }

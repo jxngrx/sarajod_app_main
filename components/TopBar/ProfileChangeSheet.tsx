@@ -1,5 +1,9 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { selectUser } from '@/store/slices/userSlice';
+import {
+    fetchAllTransactions,
+    fetchUserDetails,
+    selectUser
+} from '@/store/slices/userSlice';
 import { setProfileSelected } from '@/store/slices/userSlice'; // ← Import the action
 import { Profile } from '@/interface/userInterface';
 import { getInitials } from '@/utils/UsernameToIntialNaming';
@@ -11,6 +15,7 @@ import {
     heightPercentageToDP as hp,
     widthPercentageToDP as wp
 } from 'react-native-responsive-screen';
+import { useAppDispatch } from '@/store/hooks';
 
 const BottomSheetComponent = ({
     bottomSheetRef,
@@ -18,9 +23,11 @@ const BottomSheetComponent = ({
 }: any) => {
     const user = useSelector(selectUser);
     const dispatch = useDispatch();
-
+    const appDispatch = useAppDispatch();
     const handleProfileSelect = (index: number) => {
         dispatch(setProfileSelected(index));
+        appDispatch(fetchUserDetails());
+        appDispatch(fetchAllTransactions());
         bottomSheetRef?.current?.close();
     };
 

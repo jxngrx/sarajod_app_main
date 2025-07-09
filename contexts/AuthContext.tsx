@@ -31,9 +31,10 @@ export function SessionProvider({ children }: React.PropsWithChildren<{}>) {
         setSession(token);
     };
 
-    const signOut = () => {
+    const signOut = async () => {
         setSession(null);
-        AsyncStorage.setItem('userId', '');
+        await AsyncStorage.setItem('userId', '');
+        await AsyncStorage.setItem('token', '');
         navigateTo({
             pathname: 'LOGIN'
         });

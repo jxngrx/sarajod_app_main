@@ -1,14 +1,11 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     View,
     ScrollView,
-    SafeAreaView,
-    ActivityIndicator,
     RefreshControl,
     Platform,
     StyleSheet
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 import StatusBarColor from '@/components/StatusBarColor';
 import { BalanceCard } from '@/components/Home/BalanceCard';
 import { UserTransactionCollection } from '@/components/Home/UserTransactionCollection';
@@ -17,19 +14,38 @@ import {
     widthPercentageToDP as wp,
     heightPercentageToDP as hp
 } from 'react-native-responsive-screen';
-import { fetchUserDetails, selectUserLoading } from '@/store/slices/userSlice';
+import {
+    fetchAllTransactions,
+    fetchUserDetails,
+    selectCurrentProfile,
+    selectTransactions,
+    selectUserLoading
+} from '@/store/slices/userSlice';
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from '@/store/hooks';
+import AddTransactionWrapper from '@/components/AuthedComponents/AddTransactions';
+import { useTheme } from '@/contexts/ThemeProvider';
 
 const Home = () => {
     const [refreshing, setRefreshing] = useState(false);
     const dispatch = useAppDispatch();
     const loading = useSelector(selectUserLoading);
+    const transactions = useSelector(selectTransactions);
+    const profile = useSelector(selectCurrentProfile);
+    const { theme } = useTheme();
+
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
         await dispatch(fetchUserDetails());
+        await dispatch(fetchAllTransactions());
         setRefreshing(false);
     }, []);
+
+    useEffect(() => {
+        onRefresh();
+    }, []);
+
+    const styles = getStyles(theme);
 
     return (
         <View style={styles.container}>
@@ -40,53 +56,56 @@ const Home = () => {
             <View style={styles.contentContainer}>
                 <BalanceCard />
                 <ScrollView
+                    nestedScrollEnabled
                     style={styles.scrollContainer}
                     contentContainerStyle={styles.scrollContentContainer}
                     refreshControl={
                         <RefreshControl
                             refreshing={refreshing}
                             onRefresh={onRefresh}
-                            colors={['#60A5FA']}
-                            tintColor="#60A5FA"
+                            colors={[theme.primary]}
+                            tintColor={theme.primary}
                         />
                     }
                 >
                     <UserTransactionCollection
-                        youGive={100}
-                        youTake={100}
+                        transactions={transactions?.data}
                         refreshing={loading}
+                        profile={profile}
                     />
                 </ScrollView>
             </View>
+            <AddTransactionWrapper />
         </View>
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#3B82F6',
-        paddingTop: Platform.OS === 'ios' ? hp('2.5%') : hp('2.5%')
-    },
-    topBarContainer: {
-        marginTop: hp('5%'),
-        width: '100%'
-    },
-    contentContainer: {
-        marginTop: hp('12%'),
-        backgroundColor: '#ffffff',
-        width: '100%',
-        height: '100%',
-        borderTopLeftRadius: 30,
-        borderTopRightRadius: 30
-    },
-    scrollContainer: {
-        marginTop: hp('5%'),
-        backgroundColor: 'transparent'
-    },
-    scrollContentContainer: {
-        paddingBottom: Platform.OS === 'ios' ? hp('25%') : hp('20%')
-    }
-});
-
 export default Home;
+
+const getStyles = (theme: any) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: theme.primary,
+            paddingTop: Platform.OS === 'ios' ? hp('1%') : hp('2.5%')
+        },
+        topBarContainer: {
+            marginTop: Platform.OS === 'ios' ? hp('5%') : hp('3%'),
+            width: '100%'
+        },
+        contentContainer: {
+            marginTop: hp('12%'),
+            backgroundColor: theme.background,
+            width: '100%',
+            height: '100%',
+            borderTopLeftRadius: 30,
+            borderTopRightRadius: 30
+        },
+        scrollContainer: {
+            marginTop: Platform.OS === 'ios' ? hp('5%') : hp('8%'),
+            backgroundColor: 'transparent'
+        },
+        scrollContentContainer: {
+            paddingBottom: Platform.OS === 'ios' ? hp('25%') : hp('20%')
+        }
+    });

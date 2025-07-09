@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     KeyboardAvoidingView,
     SafeAreaView,
     Platform,
     Text,
     View,
-    Image,
     TextInput,
     TouchableOpacity,
     ActivityIndicator,
@@ -18,8 +17,6 @@ import apiService from '@/hooks/useApi';
 import { useSession } from '@/contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@/hooks/useNavigation';
-import { colorBg } from '@/components/StyleDetailsComponent';
-import { ColorContext } from '@/contexts/ColorContext';
 import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchUserDetails, setProfileSelected } from '@/store/slices/userSlice';
@@ -27,17 +24,17 @@ import {
     widthPercentageToDP as wp,
     heightPercentageToDP as hp
 } from 'react-native-responsive-screen';
+import { useTheme } from '@/contexts/ThemeProvider';
+import useTrans from '@/hooks/useLanguage';
 
 const OTPEntry = () => {
+    const { theme } = useTheme();
     const [otp, setOtp] = useState<string[]>(new Array(6).fill(''));
     const [loading, setLoading] = useState<boolean>(false);
     const [timer, setTimer] = useState<number>(30);
     const [isResendDisabled, setIsResendDisabled] = useState<boolean>(true);
-
-    const { colorId }: any = useContext(ColorContext);
-    const selectedColor =
-        colorBg.find((color) => color.id === colorId)?.color || '#2377ff';
     const route = useRoute();
+    const t = useTrans();
     const { email, name, phoneNumber } = route.params as {
         email: string;
         name: string;
@@ -56,8 +53,8 @@ const OTPEntry = () => {
         }
     }, [timer]);
 
-    const handleChange = (index: any, text: any) => {
-        let newOtp = [...otp];
+    const handleChange = (index: number, text: string) => {
+        const newOtp = [...otp];
         newOtp[index] = text;
 
         if (text && index < otp.length - 1) {
@@ -70,40 +67,33 @@ const OTPEntry = () => {
     };
 
     const handleSubmit = async () => {
-        setLoading(true);
-        try {
-            const otpCode = otp.join('');
-            if (!otpCode) {
-                alert('Please enter the OTP');
-                return;
-            }
+        const otpCode = otp.join('');
+        if (!otpCode) return alert('Please enter the OTP');
 
+        try {
+            setLoading(true);
             if (name && phoneNumber) {
-                const otpData = {
+                const res = await apiService.verifyOTPRegister({
                     email,
                     otp: otpCode,
                     fullName: name,
                     phoneNumber
-                };
-                const response = await apiService.verifyOTPRegister(otpData);
-                if (response.status === 200) {
-                    await handleSuccessfulAuth(response, 'REGISTER');
-                } else {
-                    throw new Error('Registration failed.');
-                }
-            } else if (name === '' && phoneNumber === '') {
-                const otpData = { email, otp: otpCode };
-                const response = await apiService.verifyOTPLogin(otpData);
-                if (response.status === 201 || response.status === 200) {
-                    await handleSuccessfulAuth(response, 'LOGIN');
-                } else {
-                    throw new Error('Login failed.');
-                }
+                });
+                if (res.status === 200)
+                    return handleSuccessfulAuth(res, 'REGISTER');
             } else {
-                alert('Please fill in all fields for registration');
+                const res = await apiService.verifyOTPLogin({
+                    email,
+                    otp: otpCode
+                });
+                if (res.status === 201 || res.status === 200)
+                    return handleSuccessfulAuth(res, 'LOGIN');
             }
+
+            throw new Error('OTP Verification failed.');
         } catch (error: any) {
-            const errorMessage = error?.response?.data?.message;
+            const errorMessage =
+                error?.response?.data?.message ?? 'OTP Verification failed';
             Toast.show({
                 type: ALERT_TYPE.WARNING,
                 title: 'Warning',
@@ -115,20 +105,16 @@ const OTPEntry = () => {
         }
     };
 
-    const handleSuccessfulAuth = async (response: any, path: any) => {
+    const handleSuccessfulAuth = async (response: any, type: string) => {
         const { token, message } = response.data;
         if (token) {
             await AsyncStorage.setItem('token', token);
             await AsyncStorage.setItem('colorId', '1');
             await signIn(token);
-            // 👉 This updates the Redux store with the latest user details
             await dispatch(fetchUserDetails());
             dispatch(setProfileSelected(0));
-
             await AsyncStorage.setItem('profileSelected', '0');
         }
-
-        signIn(token);
 
         Toast.show({
             type: ALERT_TYPE.SUCCESS,
@@ -137,23 +123,16 @@ const OTPEntry = () => {
             autoClose: 5000
         });
 
-        if (path === 'REGISTER') {
+        if (type === 'REGISTER') {
             navigateTo({ pathname: 'SETPASS', params: { email } });
-        } else if (path === 'LOGIN') {
-            navigateTo({ pathname: 'ENTRYPASS' });
         } else {
-            Toast.show({
-                type: ALERT_TYPE.WARNING,
-                title: 'ERROR',
-                textBody: 'Something Bad Occurred',
-                autoClose: 5000
-            });
+            navigateTo({ pathname: 'ENTRYPASS' });
         }
     };
 
     const handleResendOTP = async () => {
-        setLoading(true);
         try {
+            setLoading(true);
             const response = await apiService.resendOTP(email);
             if (response.status === 200) {
                 setTimer(30);
@@ -162,10 +141,8 @@ const OTPEntry = () => {
             } else {
                 alert('Failed to resend OTP.');
             }
-        } catch (error) {
-            alert(
-                `You Can't Send OTP before 5 minutes, Try Again in 5 Minutes`
-            );
+        } catch {
+            alert(`You can't send OTP again before 5 minutes.`);
         } finally {
             setLoading(false);
         }
@@ -176,26 +153,43 @@ const OTPEntry = () => {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView
+            style={[styles.container, { backgroundColor: theme.background }]}
+        >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.container}
                 >
-                    <View style={styles.innerContainer}>
+                    <View style={[styles.innerContainer]}>
                         <View style={styles.headingWrapper}>
-                            <Text style={styles.title}>Almost there</Text>
+                            <Text
+                                style={[styles.title, { color: theme.primary }]}
+                            >
+                                {t('otp_almost_there')}
+                            </Text>
                         </View>
+
                         <View style={styles.formWrapper}>
                             <View style={styles.instructionWrapper}>
-                                <Text style={styles.instructionText}>
-                                    Please enter the 6-digit code sent to{' '}
-                                    <Text style={styles.emailText}>
+                                <Text
+                                    style={[
+                                        styles.instructionText,
+                                        { color: theme.textSecondary }
+                                    ]}
+                                >
+                                    {t('otp_instruction')}{' '}
+                                    <Text
+                                        style={{
+                                            fontWeight: '600',
+                                            color: theme.text
+                                        }}
+                                    >
                                         {email}
-                                    </Text>{' '}
-                                    for verification.
+                                    </Text>
                                 </Text>
                             </View>
+
                             <View style={styles.otpWrapper}>
                                 {otp.map((_, index) => (
                                     <TextInput
@@ -203,7 +197,14 @@ const OTPEntry = () => {
                                         ref={(el) => {
                                             focusRef.current[index] = el;
                                         }}
-                                        style={styles.otpInput}
+                                        style={[
+                                            styles.otpInput,
+                                            {
+                                                backgroundColor: theme.card,
+                                                borderColor: theme.border,
+                                                color: theme.text
+                                            }
+                                        ]}
                                         keyboardType="numeric"
                                         maxLength={1}
                                         value={otp[index]}
@@ -214,9 +215,13 @@ const OTPEntry = () => {
                                     />
                                 ))}
                             </View>
+
                             <TouchableOpacity
                                 onPress={handleSubmit}
-                                style={[styles.submitButton]}
+                                style={[
+                                    styles.submitButton,
+                                    { backgroundColor: theme.primary }
+                                ]}
                                 disabled={loading}
                             >
                                 {loading ? (
@@ -226,19 +231,29 @@ const OTPEntry = () => {
                                     />
                                 ) : (
                                     <Text style={styles.submitText}>
-                                        Submit
+                                        {t('otp_submit')}
                                     </Text>
                                 )}
                             </TouchableOpacity>
+
                             <View style={styles.resendWrapper}>
                                 {isResendDisabled ? (
                                     <View style={styles.resendTextWrapper}>
-                                        <Text style={styles.resendText}>
-                                            Didn't receive any code? Resend
-                                            Again
+                                        <Text
+                                            style={[
+                                                styles.resendText,
+                                                { color: theme.textMuted }
+                                            ]}
+                                        >
+                                            {t('otp_resend_line')}
                                         </Text>
-                                        <Text style={styles.resendTimer}>
-                                            Resend OTP in {timer} seconds
+                                        <Text
+                                            style={[
+                                                styles.resendTimer,
+                                                { color: theme.textMuted }
+                                            ]}
+                                        >
+                                            {t('otp_resend_timer')} {timer}
                                         </Text>
                                     </View>
                                 ) : (
@@ -246,8 +261,13 @@ const OTPEntry = () => {
                                         onPress={handleResendOTP}
                                         disabled={loading}
                                     >
-                                        <Text style={styles.resendNow}>
-                                            Resend OTP
+                                        <Text
+                                            style={[
+                                                styles.resendNow,
+                                                { color: theme.info }
+                                            ]}
+                                        >
+                                            {t('otp_resend_now')}
                                         </Text>
                                     </TouchableOpacity>
                                 )}
@@ -262,8 +282,7 @@ const OTPEntry = () => {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        backgroundColor: '#F3F4F6'
+        flex: 1
     },
     innerContainer: {
         flex: 1,
@@ -275,8 +294,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: wp('10%'),
-        fontWeight: 'bold',
-        color: '#2563EB'
+        fontWeight: 'bold'
     },
     formWrapper: {
         flex: 1
@@ -286,11 +304,7 @@ const styles = StyleSheet.create({
         marginBottom: hp('8%')
     },
     instructionText: {
-        fontSize: wp('4.5%'),
-        color: '#374151'
-    },
-    emailText: {
-        fontWeight: '600'
+        fontSize: wp('4.5%')
     },
     otpWrapper: {
         flexDirection: 'row',
@@ -299,18 +313,15 @@ const styles = StyleSheet.create({
     },
     otpInput: {
         borderWidth: 1,
-        borderColor: '#D1D5DB',
         borderRadius: wp('2%'),
         padding: wp('3%'),
         textAlign: 'center',
         fontSize: wp('5%'),
-        backgroundColor: '#FFFFFF',
         width: wp('12%')
     },
     submitButton: {
         borderRadius: wp('2%'),
         paddingVertical: hp('2%'),
-        backgroundColor: '#2377ff',
         marginTop: hp('3%'),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
@@ -319,7 +330,7 @@ const styles = StyleSheet.create({
         elevation: 2
     },
     submitText: {
-        color: '#FFFFFF',
+        color: '#ffffff',
         fontSize: wp('4.5%'),
         fontWeight: '600',
         textAlign: 'center'
@@ -333,16 +344,13 @@ const styles = StyleSheet.create({
         marginTop: hp('5%')
     },
     resendText: {
-        color: '#4B5563',
         fontWeight: '600',
         textAlign: 'center'
     },
     resendTimer: {
-        color: '#4B5563',
         textAlign: 'center'
     },
     resendNow: {
-        color: '#2563EB',
         fontWeight: '600'
     }
 });

@@ -42,7 +42,7 @@ export default function RootLayout() {
 
         if (loaded) {
             SplashScreen.hideAsync(); // Hide Splash Screen only after everything loads
-            // onFetchUpdateAsync(); // Optional OTA updates
+            onFetchUpdateAsync(); // Optional OTA updates
         }
     }, [loaded]);
 

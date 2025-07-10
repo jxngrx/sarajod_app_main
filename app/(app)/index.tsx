@@ -32,9 +32,7 @@ export default function AppLayout() {
     const dispatch = useAppDispatch();
     const [appReady, setAppReady] = useState(false);
     const [hasSeenWelcome, setHasSeenWelcome] = useState<boolean | null>(null);
-    const [isMasterPassSet, setIsMasterPassSet] = useState<boolean | null>(
-        null
-    );
+    const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
     const scale = useSharedValue(1);
     const animatedStyle = useAnimatedStyle(() => ({
@@ -57,14 +55,28 @@ export default function AppLayout() {
             const seenWelcome = await AsyncStorage.getItem('hasSeenWelcome');
             setHasSeenWelcome(seenWelcome === 'true');
 
-            if (session) {
-                setIsMasterPassSet(true);
-            } else {
-                setIsMasterPassSet(false);
+            if (!session) {
+                console.log('❌ No session found');
+                setRedirectPath('/welcome');
+                return;
+            }
+
+            const userResponse = await apiService.getUserDetails();
+            console.log('✅ User data fetched:', userResponse?.data);
+
+            const masterPassExists = userResponse?.data?.user?.masterPass;
+            console.log('🔐 Master Pass Set:', masterPassExists);
+
+            await Promise.all([
+                dispatch(fetchUserDetails()),
+                dispatch(fetchAllTransactions())
+            ]);
+
+            if (masterPassExists) {
+                setRedirectPath('/(authed)/masterPass/entryPass');
             }
         } catch (error) {
-            console.error('App startup error:', error);
-            setIsMasterPassSet(false);
+            setRedirectPath('/welcome');
         } finally {
             setAppReady(true);
             await SplashScreen.hideAsync();
@@ -76,8 +88,7 @@ export default function AppLayout() {
         fetchData();
     }, [fetchData]);
 
-    // Still loading
-    if (!appReady || isMasterPassSet === null || hasSeenWelcome === null) {
+    if (!appReady || hasSeenWelcome === null || redirectPath === null) {
         return (
             <View style={styles.container}>
                 <Animated.Image
@@ -90,11 +101,7 @@ export default function AppLayout() {
         );
     }
 
-    // No session, redirect to home
-    if (!session) return <Redirect href="/welcome" />;
-
-    // Session present and master pass is set
-    return <Redirect href="/(authed)/masterPass/entryPass" />;
+    return <Redirect href={redirectPath as any} />;
 }
 
 const styles = StyleSheet.create({

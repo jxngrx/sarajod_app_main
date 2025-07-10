@@ -28,6 +28,7 @@ export function SessionProvider({ children }: React.PropsWithChildren<{}>) {
     const [[isLoading, session], setSession] = useStorageState('session');
     const { navigateTo } = useNavigation();
     const signIn = (token: string) => {
+        console.log('WORKING');
         setSession(token);
     };
 

@@ -2,7 +2,8 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Base URL for your API
-const BASE_URL = 'https://thoroughly-romantic-quetzal.ngrok-free.app/api/v1'; // Replace with your actual API URL
+const BASE_URL = 'https://sarajodapi.vercel.app/api/v1'; // Replace with your actual API URL
+// const BASE_URL = 'https://thoroughly-romantic-quetzal.ngrok-free.app/api/v1'; // Replace with your actual API URL
 
 // Create an Axios instance
 const api = axios.create({

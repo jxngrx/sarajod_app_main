@@ -79,12 +79,24 @@ const Login = () => {
             const errorMessage =
                 error?.response?.data?.message ||
                 'An unexpected error occurred.';
-            Toast.show({
-                type: ALERT_TYPE.WARNING,
-                title: 'Warning',
-                textBody: errorMessage,
-                autoClose: 3000
-            });
+            if (errorMessage === 'User not found.') {
+                navigateTo({
+                    pathname: 'REGISTER'
+                });
+                Toast.show({
+                    type: ALERT_TYPE.WARNING,
+                    title: 'Warning',
+                    textBody: 'First create your account',
+                    autoClose: 3000
+                });
+            } else {
+                Toast.show({
+                    type: ALERT_TYPE.WARNING,
+                    title: 'Warning',
+                    textBody: errorMessage,
+                    autoClose: 3000
+                });
+            }
         } finally {
             setLoading(false);
         }

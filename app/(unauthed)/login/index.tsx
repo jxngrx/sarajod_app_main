@@ -58,7 +58,6 @@ const Login = () => {
             const response = await apiService.loginUser({ email: userEmail });
 
             if (response.status === 200) {
-                signIn(response.data?.token);
                 Toast.show({
                     type: ALERT_TYPE.SUCCESS,
                     title: 'Success',

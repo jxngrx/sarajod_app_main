@@ -11,6 +11,7 @@ import {
 import ProfileCreationBottomSheet from '../TopBar/ProfileCreationBottomSheet';
 import { useSession } from '@/contexts/AuthContext';
 import { useNavigation } from '@/hooks/useNavigation';
+import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 
 const TopBar = () => {
     const user = useSelector(selectUser);
@@ -29,9 +30,15 @@ const TopBar = () => {
             (!user.profile || user.profile.length === 0) &&
             !hasOpened
         ) {
+            Toast.show({
+                type: ALERT_TYPE.DANGER,
+                title: 'Error',
+                textBody: 'You have to create your first profile.'
+            });
             openProfileSheet();
             setHasOpened(true);
         }
+        console.log(hasOpened, 'hasOpened');
     }, [user, hasOpened]);
 
     return (
@@ -95,6 +102,7 @@ const TopBar = () => {
             )}
             {bottomSheetProfileRef && (
                 <ProfileCreationBottomSheet
+                    onClose={setHasOpened}
                     bottomSheetProfileRef={bottomSheetProfileRef}
                 />
             )}

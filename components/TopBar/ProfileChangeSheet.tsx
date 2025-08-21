@@ -31,6 +31,9 @@ const BottomSheetComponent = ({
         bottomSheetRef?.current?.close();
     };
 
+    console.log(user, user?.profile, "USER DETAILS GETTING");
+
+
     const handleProfileCreate = () => {
         bottomSheetRef?.current?.close();
         setTimeout(() => {
@@ -43,7 +46,7 @@ const BottomSheetComponent = ({
             ref={bottomSheetRef}
             height={hp('50%')}
             openDuration={250}
-            closeOnPressBack={true}
+            closeOnPressBack
             draggable={false}
             customStyles={{
                 container: {
@@ -73,7 +76,7 @@ const BottomSheetComponent = ({
                     <Text style={{ fontSize: wp(5) }}>Add Profile</Text>
                 </TouchableOpacity>
                 <ScrollView>
-                    {user?.profile.map(
+                    {user?.profile?.map(
                         (userProfile: Profile, index: number) => (
                             <TouchableOpacity
                                 key={userProfile._id}
@@ -86,7 +89,8 @@ const BottomSheetComponent = ({
                                     paddingHorizontal: 10,
                                     borderBottomWidth: 1,
                                     borderBottomColor: '#ccc',
-                                    borderRadius: 8
+                                    borderRadius: 8,
+                                    position: 'relative'
                                 }}
                             >
                                 <View
@@ -138,6 +142,19 @@ const BottomSheetComponent = ({
                                                 .transactionCollection[0]
                                                 ?.transactionId?.length || 0}
                                         </Text>
+                                        {userProfile.isBusinessPartnerProfile && (
+                                            <Text
+                                                style={{
+                                                    fontSize: wp(3.5),
+                                                    color: '#6B7280',
+                                                    borderRadius: wp(2),
+                                                    borderWidth: wp(0.1),
+                                                    padding: wp(1),
+                                                }}
+                                            >
+                                                Business Partner Profile
+                                            </Text>
+                                        )}
                                     </View>
                                 </View>
                                 <FontAwesome5

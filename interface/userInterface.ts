@@ -14,6 +14,7 @@ export interface Profile {
     profileNumber: number;
     profileTotalCredit: number;
     profileTotalDebit: number;
+    isBusinessPartnerProfile: number;
     transactionCollection: TransactionCollection[];
     notificationCollection: string[];
     createdAt: string;

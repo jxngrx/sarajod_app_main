@@ -43,20 +43,29 @@ export default function Layout() {
                 />
                 <Tabs.Screen
                     name="requests"
-                    options={{
-                        href: null
-                    }}
                     // options={{
-                    //     title: 'Requests',
-                    //     tabBarIcon: ({ color }) => (
-                    //         <Feather name="clipboard" size={20} color={color} />
-                    //     )
+                    //     href: null
                     // }}
+                    options={{
+                        title: 'Requests',
+                        tabBarIcon: ({ color }) => (
+                            <Feather name="check-square" size={20} color={color} />
+                        )
+                    }}
                 />
                 <Tabs.Screen
                     name="staff"
                     options={{
                         title: 'Your Staff',
+                        tabBarIcon: ({ color }) => (
+                            <Feather name="briefcase" size={20} color={color} />
+                        )
+                    }}
+                />
+                <Tabs.Screen
+                    name="BusinessPartner"
+                    options={{
+                        title: 'Partners',
                         tabBarIcon: ({ color }) => (
                             <Feather name="users" size={20} color={color} />
                         )

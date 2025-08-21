@@ -2,8 +2,8 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Base URL for your API
-const BASE_URL = 'https://sarajodapi.vercel.app/api/v1'; // Replace with your actual API URL
-// const BASE_URL = 'https://thoroughly-romantic-quetzal.ngrok-free.app/api/v1'; // Replace with your actual API URL
+// const BASE_URL = 'https://sarajodapi.vercel.app/api/v1'; // Replace with your actual API URL
+const BASE_URL = 'https://thoroughly-romantic-quetzal.ngrok-free.app/api/v1'; // Replace with your actual API URL
 
 // Create an Axios instance
 const api = axios.create({
@@ -118,6 +118,16 @@ const apiService = {
         api.delete(
             `/transaction/transaction-table/${transactionTableId}/profile/${profileId}`
         ),
+
+    //Business Partner and Request
+    getAllRequests: () => api.get('/tickets'),
+    // Business Partner APIs
+    getAllBusinessPartners: (profileId: string) => api.get(`/user/business-partner/list?profileId=${profileId}`),
+    addBusinessPartnerToProfile: (payload: { partnerPhoneNumber: string; profileId: string; role: string; permissions: string[] }) =>
+      api.post('/user/business-partner/add', payload),
+    removeBusinessPartnerFromProfile: (payload: { partnerUserId: string; profileId: string }) =>
+      api.post('/user/business-partner/remove', payload),
+    getProfilesForBusinessPartner: () => api.get('/user/business-partner/profiles'),
 
     //Staff
     addStaffMember: (payload: any) => api.post('/staff', payload),

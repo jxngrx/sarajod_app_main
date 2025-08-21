@@ -16,6 +16,7 @@ import CreateTransactionBottomSheet from '../AuthedComponents/AddTransactions/UI
 import { useNavigation } from '@/hooks/useNavigation';
 import { useTheme } from '@/contexts/ThemeProvider';
 import DeleteTransactionBottomSheet from '../AuthedComponents/AddTransactions/UI/DeleteTransaction';
+import { convertToIndianNumbering } from '@/utils/ConvertToIndianNumbering';
 
 export const UserTransactionCollection = ({
     refreshing,
@@ -32,17 +33,6 @@ export const UserTransactionCollection = ({
         if (transaction) setTransactionToDelete(transaction);
         deleteTransaction.current?.open();
     };
-    function formatPrice(number: number): string {
-        if (number < 1000) return number.toString();
-        const absNumber = Math.abs(number);
-        if (absNumber < 1_00_000) {
-            return (number / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
-        } else if (absNumber < 1_00_00_000) {
-            return (number / 1_00_000).toFixed(1).replace(/\.0$/, '') + 'L';
-        } else {
-            return (number / 1_00_00_000).toFixed(1).replace(/\.0$/, '') + 'Cr';
-        }
-    }
 
     return (
         <View style={[styles.container]}>
@@ -138,7 +128,7 @@ export const UserTransactionCollection = ({
                                         ]}
                                     >
                                         ₹
-                                        {formatPrice(
+                                        {convertToIndianNumbering(
                                             Math.abs(
                                                 Number(transaction.totalBalance)
                                             )

@@ -6,7 +6,8 @@ import {
     View,
     TouchableOpacity,
     ScrollView,
-    Alert
+    Alert,
+    ActivityIndicator
 } from 'react-native';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import { Dropdown } from 'react-native-element-dropdown';
@@ -58,12 +59,6 @@ const CreateTransactionBottomSheet = forwardRef(
                 setAmount(String(transactionToEdit.amount));
                 setDescription(transactionToEdit.description || '');
                 setType(transactionToEdit.type);
-                setProducts(
-                    transactionToEdit.productDetails?.map((p: any) => ({
-                        productName: p.productName,
-                        quantity: String(p.quantity)
-                    })) || [{ productName: '', quantity: '' }]
-                );
             }
         }, [transactionType, transactionToEdit]);
 
@@ -74,33 +69,9 @@ const CreateTransactionBottomSheet = forwardRef(
             setProducts([{ productName: '', quantity: '' }]);
         };
 
-        const handleProductChange = (
-            index: number,
-            field: 'productName' | 'quantity',
-            value: string
-        ) => {
-            const updated = [...products];
-            updated[index][field] = value;
-            setProducts(updated);
-        };
-
         const handleSubmitTransaction = async () => {
             if (!amount || isNaN(Number(amount))) {
                 return Alert.alert('Validation Error', 'Enter valid amount.');
-            }
-
-            const invalidProduct = products.some(
-                (p) =>
-                    !p.productName ||
-                    isNaN(Number(p.quantity)) ||
-                    Number(p.quantity) <= 0
-            );
-
-            if (invalidProduct) {
-                return Alert.alert(
-                    'Validation Error',
-                    'Enter valid product name and quantity.'
-                );
             }
 
             try {
@@ -120,10 +91,6 @@ const CreateTransactionBottomSheet = forwardRef(
                     month: today.getMonth() + 1,
                     year: today.getFullYear(),
                     description,
-                    productDetails: products.map((p) => ({
-                        productName: p.productName,
-                        quantity: Number(p.quantity)
-                    }))
                 };
 
                 let response;
@@ -142,7 +109,7 @@ const CreateTransactionBottomSheet = forwardRef(
                         title: 'Success',
                         textBody: isEditing
                             ? 'Transaction updated!'
-                            : 'Transaction added!'
+                            : response?.data?.message ?? 'Transaction added!'
                     });
                     await dispatch(fetchAllTransactions());
                     await dispatch(fetchUserDetails());
@@ -167,8 +134,9 @@ const CreateTransactionBottomSheet = forwardRef(
         return (
             <RBSheet
                 ref={sheetRef}
-                height={hp('90%')}
+                height={hp('75%')}
                 openDuration={250}
+                closeOnPressBack
                 closeOnPressMask
                 onClose={() => {
                     resetForm();
@@ -273,91 +241,6 @@ const CreateTransactionBottomSheet = forwardRef(
                         placeholder="Transaction description"
                         placeholderTextColor={theme.textSecondary}
                     />
-
-                    <Text
-                        style={[
-                            styles.label,
-                            { color: theme.text, marginTop: hp('2%') }
-                        ]}
-                    >
-                        Products
-                    </Text>
-
-                    {products.map((product, index) => (
-                        <View key={index} style={{ marginBottom: hp('1.5%') }}>
-                            <TextInput
-                                style={[
-                                    styles.input,
-                                    {
-                                        color: theme.text,
-                                        borderColor: theme.border
-                                    }
-                                ]}
-                                placeholder="Product Name"
-                                placeholderTextColor={theme.textSecondary}
-                                value={product.productName}
-                                onChangeText={(text) =>
-                                    handleProductChange(
-                                        index,
-                                        'productName',
-                                        text
-                                    )
-                                }
-                            />
-                            <TextInput
-                                style={[
-                                    styles.input,
-                                    {
-                                        color: theme.text,
-                                        borderColor: theme.border
-                                    }
-                                ]}
-                                placeholder="Quantity"
-                                keyboardType="numeric"
-                                placeholderTextColor={theme.textSecondary}
-                                value={product.quantity}
-                                onChangeText={(text) =>
-                                    handleProductChange(index, 'quantity', text)
-                                }
-                            />
-                        </View>
-                    ))}
-
-                    <View style={styles.row}>
-                        <TouchableOpacity
-                            onPress={() =>
-                                products.length > 1 &&
-                                setProducts(products.slice(0, -1))
-                            }
-                        >
-                            <Text
-                                style={[
-                                    styles.removeProductText,
-                                    { color: theme.danger }
-                                ]}
-                            >
-                                - Remove Product
-                            </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            onPress={() =>
-                                setProducts([
-                                    ...products,
-                                    { productName: '', quantity: '' }
-                                ])
-                            }
-                        >
-                            <Text
-                                style={[
-                                    styles.addProductText,
-                                    { color: theme.primary }
-                                ]}
-                            >
-                                + Add Product
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-
                     <TouchableOpacity
                         style={[
                             styles.button,
@@ -366,17 +249,18 @@ const CreateTransactionBottomSheet = forwardRef(
                         onPress={handleSubmitTransaction}
                         disabled={loading}
                     >
-                        <Text
-                            style={[styles.buttonText, { color: theme.card }]}
-                        >
-                            {loading
-                                ? isEditing
-                                    ? 'Updating...'
-                                    : 'Creating...'
-                                : isEditing
-                                ? 'Update Transaction'
-                                : 'Create Transaction'}
-                        </Text>
+                        {loading ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <ActivityIndicator size="small" color={theme.card} style={{ marginRight: 8 }} />
+                                <Text style={[styles.buttonText, { color: theme.card }]}>
+                                    {isEditing ? 'Updating...' : 'Creating...'}
+                                </Text>
+                            </View>
+                        ) : (
+                            <Text style={[styles.buttonText, { color: theme.card }]}>
+                                {isEditing ? 'Update Transaction' : 'Create Transaction'}
+                            </Text>
+                        )}
                     </TouchableOpacity>
                 </ScrollView>
             </RBSheet>

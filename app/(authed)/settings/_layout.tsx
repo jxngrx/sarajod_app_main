@@ -53,14 +53,14 @@ const Settings = () => {
 
     const { switchToHinglish, switchToEnglish } = useLanguageSwitcher();
     const options = [
-        {
-            label: t('settings_my_profile'),
+        // {
+        //     label: t('settings_my_profile'),
 
-            icon: (
-                <Ionicons name="person-outline" size={22} color={theme.text} />
-            ),
-            onPress: () => {}
-        },
+        //     icon: (
+        //         <Ionicons name="person-outline" size={22} color={theme.text} />
+        //     ),
+        //     onPress: () => {}
+        // },
         {
             label: t('settings_change_password'),
             icon: (
@@ -120,6 +120,11 @@ const Settings = () => {
                 <Text style={[styles.userPhone, { color: theme.card }]}>
                     {user?.phone_number || ''}
                 </Text>
+                {user?.email && (
+                    <Text style={[styles.userPhone, { color: theme.card }]}>
+                        {user?.email || ''}
+                    </Text>
+                )}
             </View>
 
             {/* Options */}

@@ -1,5 +1,5 @@
-import React, { forwardRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { forwardRef, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import { useTheme } from '@/contexts/ThemeProvider';
 import {
@@ -15,10 +15,11 @@ const PayorDeleteStaffBottomSheet = forwardRef(
     ({ sheetRef, staffForAction }: any, ref) => {
         const { theme } = useTheme();
         const dispatch = useAppDispatch();
+        const [loading, setLoading] = useState(false);
 
         const handleDelete = async () => {
             if (!staffForAction?._id) return;
-
+            setLoading(true);
             try {
                 const response = await apiService.deleteStaffMember(
                     staffForAction?._id
@@ -44,11 +45,14 @@ const PayorDeleteStaffBottomSheet = forwardRef(
                     title: 'Error',
                     textBody: message
                 });
+            } finally {
+                setLoading(false);
             }
         };
 
         const handlePayStaff = async () => {
             if (!staffForAction?._id) return;
+            setLoading(true);
             const today = new Date();
             const paymentDate = `${today.getFullYear()}-${String(
                 today.getMonth() + 1
@@ -83,6 +87,8 @@ const PayorDeleteStaffBottomSheet = forwardRef(
                     title: 'Error',
                     textBody: message
                 });
+            } finally {
+                setLoading(false);
             }
         };
         return (
@@ -90,6 +96,7 @@ const PayorDeleteStaffBottomSheet = forwardRef(
                 ref={sheetRef}
                 height={hp(30)}
                 openDuration={250}
+                closeOnPressBack
                 closeOnPressMask
                 customStyles={{
                     container: {
@@ -117,15 +124,23 @@ const PayorDeleteStaffBottomSheet = forwardRef(
                                 styles.deleteButton,
                                 { backgroundColor: theme.success }
                             ]}
+                            disabled={loading}
                         >
-                            <Text style={styles.deleteText}>
-                                PAY STAFF -{' '}
-                                {new Date().toLocaleDateString('en-GB', {
-                                    day: '2-digit',
-                                    month: 'long',
-                                    year: 'numeric'
-                                })}
-                            </Text>
+                            {loading ? (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />
+                                    <Text style={styles.deleteText}>Processing...</Text>
+                                </View>
+                            ) : (
+                                <Text style={styles.deleteText}>
+                                    PAY STAFF -{' '}
+                                    {new Date().toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: 'long',
+                                        year: 'numeric'
+                                    })}
+                                </Text>
+                            )}
                         </TouchableOpacity>
                         <TouchableOpacity
                             onPress={handleDelete}
@@ -133,8 +148,16 @@ const PayorDeleteStaffBottomSheet = forwardRef(
                                 styles.deleteButton,
                                 { backgroundColor: theme.danger }
                             ]}
+                            disabled={loading}
                         >
-                            <Text style={styles.deleteText}>DELETE STAFF</Text>
+                            {loading ? (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />
+                                    <Text style={styles.deleteText}>Processing...</Text>
+                                </View>
+                            ) : (
+                                <Text style={styles.deleteText}>DELETE STAFF</Text>
+                            )}
                         </TouchableOpacity>
                     </View>
                 </View>

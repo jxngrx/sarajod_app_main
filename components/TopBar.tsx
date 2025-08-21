@@ -1,10 +1,19 @@
 import { useSession } from '@/contexts/AuthContext';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { View, Text, Platform, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Platform, TouchableOpacity, ActivityIndicator } from 'react-native';
 
 const TopBar = ({ title }: { title: string }) => {
     const { signOut } = useSession();
+    const [loading, setLoading] = useState(false);
+    const handleSignOut = async () => {
+        setLoading(true);
+        try {
+            await signOut();
+        } finally {
+            setLoading(false);
+        }
+    };
     return (
         <View
             className={`w-full ${
@@ -16,8 +25,12 @@ const TopBar = ({ title }: { title: string }) => {
                 <FontAwesome5 name="chevron-down" color="white" />
             </View>
 
-            <TouchableOpacity onPress={signOut}>
-                <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+            <TouchableOpacity onPress={handleSignOut} disabled={loading}>
+                {loading ? (
+                    <ActivityIndicator size="small" color="#FF3B30" />
+                ) : (
+                    <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+                )}
             </TouchableOpacity>
         </View>
     );

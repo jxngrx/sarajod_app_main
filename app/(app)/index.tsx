@@ -28,10 +28,11 @@ import {
 SplashScreen.preventAutoHideAsync();
 
 export default function AppLayout() {
-    const { session, signOut } = useSession();
+    const { isLoading, refreshToken } = useSession();
     const dispatch = useAppDispatch();
+
+    const [session, setSession] = useState<string | null>(null);
     const [appReady, setAppReady] = useState(false);
-    const [hasSeenWelcome, setHasSeenWelcome] = useState<boolean | null>(null);
     const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
     const scale = useSharedValue(1);
@@ -50,45 +51,86 @@ export default function AppLayout() {
         );
     };
 
+    const cacheUserData = async (userDetails: any, transactions: any) => {
+        try {
+            await AsyncStorage.setItem(
+                'cachedUserDetails',
+                JSON.stringify(userDetails)
+            );
+            await AsyncStorage.setItem(
+                'cachedTransactions',
+                JSON.stringify(transactions)
+            );
+        } catch (e) {
+            console.warn('Failed to cache user data', e);
+        }
+    };
+
     const fetchData = useCallback(async () => {
         try {
-            const seenWelcome = await AsyncStorage.getItem('hasSeenWelcome');
-            setHasSeenWelcome(seenWelcome === 'true');
+            const token = await AsyncStorage.getItem('token');
+            setSession(token);
 
-            if (!session) {
-                console.log('❌ No session found');
+            if (!token) {
                 setRedirectPath('/welcome');
                 return;
             }
 
-            const userResponse = await apiService.getUserDetails();
-            console.log('✅ User data fetched:', userResponse?.data);
+            let userResponse;
+            let masterPassResponse;
 
-            const masterPassExists = userResponse?.data?.user?.masterPass;
-            console.log('🔐 Master Pass Set:', masterPassExists);
+            try {
+                userResponse = await apiService.getUserDetails();
+                masterPassResponse = await apiService.isMasterPass();
+            } catch (err: any) {
+                if (err?.response?.status === 401) {
+                    const refreshed = await refreshToken();
+                    if (refreshed) {
+                        userResponse = await apiService.getUserDetails();
+                        masterPassResponse = await apiService.isMasterPass();
+                    } else {
+                        setRedirectPath('/welcome');
+                        return;
+                    }
+                } else {
+                    setRedirectPath('/welcome');
+                    return;
+                }
+            }
 
-            await Promise.all([
-                dispatch(fetchUserDetails()),
-                dispatch(fetchAllTransactions())
-            ]);
+            if (userResponse && userResponse.data) {
+                // Fetch and cache user data
+                const userDataAction = await dispatch(fetchUserDetails());
+                const transactionsAction = await dispatch(
+                    fetchAllTransactions()
+                );
 
-            if (masterPassExists) {
+                await cacheUserData(
+                    userDataAction.payload,
+                    transactionsAction.payload
+                );
+            }
+
+            if (masterPassResponse?.status === 200) {
                 setRedirectPath('/(authed)/masterPass/entryPass');
+            } else {
+                setRedirectPath('/welcome');
             }
         } catch (error) {
+            console.error('Fetch Error:', error);
             setRedirectPath('/welcome');
         } finally {
             setAppReady(true);
             await SplashScreen.hideAsync();
             startScaleAnimation();
         }
-    }, [session]);
+    }, []);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
-    if (!appReady || hasSeenWelcome === null || redirectPath === null) {
+    if (isLoading || !appReady || redirectPath === null) {
         return (
             <View style={styles.container}>
                 <Animated.Image

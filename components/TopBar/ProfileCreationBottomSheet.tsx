@@ -19,7 +19,10 @@ import {
     heightPercentageToDP as hp
 } from 'react-native-responsive-screen';
 
-const ProfileCreationBottomSheet = ({ bottomSheetProfileRef }: any) => {
+const ProfileCreationBottomSheet = ({
+    bottomSheetProfileRef,
+    onClose
+}: any) => {
     const user = useAppSelector(selectUser);
     const dispatch = useAppDispatch();
     const [profileName, setProfileName] = useState('');
@@ -82,7 +85,8 @@ const ProfileCreationBottomSheet = ({ bottomSheetProfileRef }: any) => {
             ref={bottomSheetProfileRef}
             height={hp('70%')}
             openDuration={250}
-            closeOnPressBack={true}
+            closeOnPressBack
+            onClose={() => onClose(false)}
             draggable={false}
             customStyles={{
                 container: {

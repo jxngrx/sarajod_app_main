@@ -1,67 +1,75 @@
 {
-    "expo": {
-        "name": "sarajod",
-        "slug": "sarajod",
-        "version": "1.0.0",
-        "icon": "./assets/SARAJOD-LOGO.png",
-        "scheme": "sarajod",
-        "userInterfaceStyle": "automatic",
-        "newArchEnabled": true,
-        "ios": {
-            "supportsTablet": true,
-            "bundleIdentifier": "com.typicaltechno.sarajod"
-        },
-        "android": {
-            "adaptiveIcon": {
-                "foregroundImage": "./assets/SARAJOD-LOGO.png",
-                "backgroundColor": "#ffffff"
-            },
-            "permissions": [
-                "android.permission.USE_BIOMETRIC",
-                "android.permission.USE_FINGERPRINT"
-            ],
-            "package": "com.typicaltechno.sarajod"
-        },
-        "web": {
-            "bundler": "metro",
-            "output": "static",
-            "favicon": "./assets/SARAJOD-LOGO.png"
-        },
-        "plugins": [
-            "expo-router",
-            [
-                "expo-local-authentication",
-                {
-                    "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID."
-                }
-            ],
-            [
-                "expo-splash-screen",
-                {
-                    "backgroundColor": "#2E3B7F",
-                    "image": "./assets/SARAJOD-LOGO.png",
-                    "resizeMode": "contain",
-                    "dark": {
-                        "image": "./assets/SARAJOD-LOGO.png",
-                        "backgroundColor": "#001d43"
-                    }
-                }
-            ],
-            "expo-secure-store",
-            "expo-font",
-            "expo-web-browser"
-        ],
-        "experiments": {
-            "typedRoutes": true
-        },
-        "extra": {
-            "router": {
-                "origin": false
-            },
-            "eas": {
-                "projectId": "d3717ade-d85b-4111-a3e1-157e9577fe28"
-            }
-        },
-        "owner": "sarajod"
+  "expo": {
+    "name": "sarajod",
+    "slug": "sarajod",
+    "version": "1.0.0",
+    "icon": "./assets/SARAJOD-LOGO.png",
+    "scheme": "sarajod",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.typicaltechno.sarajod"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/SARAJOD-LOGO.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ],
+      "package": "com.typicaltechno.sarajod"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/SARAJOD-LOGO.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow $(PRODUCT_NAME) to use Face ID."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#2E3B7F",
+          "image": "./assets/SARAJOD-LOGO.png",
+          "resizeMode": "contain",
+          "dark": {
+            "image": "./assets/SARAJOD-LOGO.png",
+            "backgroundColor": "#001d43"
+          }
+        }
+      ],
+      "expo-secure-store",
+      "expo-font",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "d3717ade-d85b-4111-a3e1-157e9577fe28"
+      }
+    },
+    "owner": "sarajod",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/d3717ade-d85b-4111-a3e1-157e9577fe28"
     }
+  }
 }

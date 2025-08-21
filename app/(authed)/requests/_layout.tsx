@@ -1,28 +1,21 @@
 import React from 'react';
-import {
-    View,
-    Text,
-    ScrollView,
-    TouchableWithoutFeedback,
-    KeyboardAvoidingView,
-    Platform,
-    Keyboard
-} from 'react-native';
+import { SafeAreaView } from 'react-native';
+import { useTheme } from '@/contexts/ThemeProvider';
+import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
+import RequestScreenComponent from '@/components/AuthedComponents/Request';
 
 const RequestScreen = () => {
+    const { theme } = useTheme();
     return (
-        <ScrollView className="flex-1 bg-gray-50">
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    className="flex-1 bg-gray-50 p-4"
-                >
-                    <View>
-                        <Text>Request Screen</Text>
-                    </View>
-                </KeyboardAvoidingView>
-            </TouchableWithoutFeedback>
-        </ScrollView>
+        <SafeAreaView
+            style={{
+                flex: 1,
+                paddingHorizontal: wp(1),
+                backgroundColor: theme.background
+            }}
+        >
+            <RequestScreenComponent />
+        </SafeAreaView>
     );
 };
 

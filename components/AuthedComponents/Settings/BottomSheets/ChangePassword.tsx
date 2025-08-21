@@ -7,7 +7,8 @@ import {
     TouchableOpacity,
     KeyboardAvoidingView,
     Platform,
-    Alert
+    Alert,
+    ActivityIndicator
 } from 'react-native';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import { useTheme } from '@/contexts/ThemeProvider';
@@ -67,6 +68,7 @@ export default function ChangePasswordBottomSheet({
         <RBSheet
             ref={bottomSheetRef}
             height={hp('35%')}
+            closeOnPressBack
             openDuration={250}
             customStyles={{
                 container: {
@@ -114,9 +116,23 @@ export default function ChangePasswordBottomSheet({
                     disabled={loading}
                     style={[styles.button, { backgroundColor: theme.primary }]}
                 >
-                    <Text style={[styles.buttonText]}>
-                        {loading ? 'Updating...' : 'Update Password'}
-                    </Text>
+                    {loading ? (
+                        <View
+                            style={{
+                                flexDirection: 'row',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <ActivityIndicator
+                                size="small"
+                                color="#fff"
+                                style={{ marginRight: 8 }}
+                            />
+                            <Text style={[styles.buttonText]}>Updating...</Text>
+                        </View>
+                    ) : (
+                        <Text style={[styles.buttonText]}>Update Password</Text>
+                    )}
                 </TouchableOpacity>
             </KeyboardAvoidingView>
         </RBSheet>

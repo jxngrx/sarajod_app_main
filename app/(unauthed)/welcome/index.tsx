@@ -1,6 +1,4 @@
-import { useSession } from '@/contexts/AuthContext';
 import { useNavigation } from '@/hooks/useNavigation';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useEffect } from 'react';
 import {
     KeyboardAvoidingView,
@@ -22,13 +20,6 @@ import useTrans from '@/hooks/useLanguage';
 const Welcome = () => {
     const { navigateTo } = useNavigation();
     const t = useTrans();
-
-    useEffect(() => {
-        async function updateCheckIn() {
-            await AsyncStorage.setItem('hasSeenWelcome', 'false');
-        }
-        updateCheckIn();
-    }, []);
 
     return (
         <SafeAreaView style={styles.safeArea}>

@@ -7,7 +7,8 @@ import {
     TouchableOpacity,
     Alert,
     TouchableWithoutFeedback,
-    Keyboard
+    Keyboard,
+    ActivityIndicator
 } from 'react-native';
 import RBSheet from 'react-native-raw-bottom-sheet';
 import {
@@ -85,6 +86,7 @@ const AddTransactionBottomSheet = forwardRef(
                 height={hp('70%')}
                 openDuration={250}
                 closeOnPressMask
+                closeOnPressBack
                 onClose={onClose}
                 customStyles={{
                     container: {
@@ -172,14 +174,28 @@ const AddTransactionBottomSheet = forwardRef(
                             onPress={handleAddTransaction}
                             disabled={loading}
                         >
-                            <Text
-                                style={[
-                                    styles.buttonText,
-                                    { color: theme.white || '#fff' }
-                                ]}
-                            >
-                                {loading ? t('adding') : t('startTransaction')}
-                            </Text>
+                            {loading ? (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <ActivityIndicator size="small" color={theme.white || '#fff'} style={{ marginRight: 8 }} />
+                                    <Text
+                                        style={[
+                                            styles.buttonText,
+                                            { color: theme.white || '#fff' }
+                                        ]}
+                                    >
+                                        {t('adding')}
+                                    </Text>
+                                </View>
+                            ) : (
+                                <Text
+                                    style={[
+                                        styles.buttonText,
+                                        { color: theme.white || '#fff' }
+                                    ]}
+                                >
+                                    {t('startTransaction')}
+                                </Text>
+                            )}
                         </TouchableOpacity>
                     </View>
                 </TouchableWithoutFeedback>

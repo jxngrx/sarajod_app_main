@@ -1,11 +1,10 @@
-import StaffComponentMain from '@/components/AuthedComponents/Staff';
+import BusinessPartnerLayoutComponent from '@/components/AuthedComponents/BusinessPartner';
 import StatusBarColor from '@/components/StatusBarColor';
 import { useTheme } from '@/contexts/ThemeProvider';
 import React from 'react';
-import { SafeAreaView, View } from 'react-native';
+import { SafeAreaView } from 'react-native';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
-
-const StaffScreen = () => {
+const BusinessPartnerScreen = () => {
     const { theme } = useTheme();
     return (
         <SafeAreaView
@@ -16,9 +15,8 @@ const StaffScreen = () => {
             }}
         >
             <StatusBarColor />
-            <StaffComponentMain />
+            <BusinessPartnerLayoutComponent />
         </SafeAreaView>
     );
 };
-
-export default StaffScreen;
+export default BusinessPartnerScreen;

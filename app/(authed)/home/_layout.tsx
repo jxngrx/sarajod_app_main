@@ -90,7 +90,7 @@ const getStyles = (theme: any) =>
             paddingTop: Platform.OS === 'ios' ? hp('1%') : hp('2.5%')
         },
         topBarContainer: {
-            marginTop: Platform.OS === 'ios' ? hp('5%') : hp('3%'),
+            marginTop: hp(4),
             width: '100%'
         },
         contentContainer: {

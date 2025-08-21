@@ -51,25 +51,26 @@ const DeleteTransactionBottomSheet = forwardRef(
             setLoading(true);
             try {
                 let status: number = 0;
+                let response;
                 if (transactionToDelete && transactionToDelete?._id) {
-                    const response = await apiService.deleteTransaction(
+                    response = await apiService.deleteTransaction(
                         transactionToDelete._id,
                         profile?._id
                     );
                     status = response.status;
                 } else if (transactionCollectionToDelete) {
-                    const response = await apiService.deleteTransactionTable(
+                    response = await apiService.deleteTransactionTable(
                         transactionCollectionToDelete._id,
                         profile?._id
                     );
                     status = response.status;
                 }
 
-                if (status === 200) {
+                if (status === 200 || status === 201) {
                     Toast.show({
                         type: ALERT_TYPE.SUCCESS,
                         title: 'Deleted',
-                        textBody: 'Transaction deleted successfully!'
+                        textBody: response?.data?.message
                     });
 
                     await dispatch(fetchUserDetails());
@@ -97,6 +98,7 @@ const DeleteTransactionBottomSheet = forwardRef(
                 ref={sheetRef}
                 height={hp(30)}
                 openDuration={250}
+                closeOnPressBack
                 closeOnPressMask
                 onClose={onClose}
                 customStyles={{

@@ -37,7 +37,9 @@ const TransactionDetailScreen = () => {
     const profile = useSelector(selectCurrentProfile);
     const transaction = JSON.parse(data as string);
     const { navigateTo } = useNavigation();
-    const [paymentType, setPaymentType] = useState(false);
+    const [paymentType, setPaymentType] = useState<
+        'NONE' | 'ACTUAL' | 'SALARY'
+    >('NONE');
     const createTransaction = useRef<any>(null);
     const deleteTransaction = useRef<any>(null);
     const { theme } = useTheme();
@@ -57,11 +59,9 @@ const TransactionDetailScreen = () => {
         });
 
     const openSheet = (type: string, transaction?: any) => {
-        if (!paymentType) {
-            setTransactionType(type);
-            if (transaction) setTransactionToEdit(transaction);
-            createTransaction.current?.open();
-        }
+        setTransactionType(type);
+        if (transaction) setTransactionToEdit(transaction);
+        createTransaction.current?.open();
     };
 
     const openDeleteSheet = (transaction?: any) => {
@@ -98,10 +98,12 @@ const TransactionDetailScreen = () => {
 
         await dispatch(fetchUserDetails());
         await dispatch(fetchAllTransactions());
-        const isSalary = await transactionAmountDetails?.every(
-            (item) => item.type === 'salary'
-        );
-        setPaymentType(isSalary);
+        if (transactionAmountDetails.length > 0) {
+            const isSalary = await transactionAmountDetails?.every(
+                (item) => item.type === 'salary'
+            );
+            setPaymentType(isSalary ? 'SALARY' : 'ACTUAL');
+        }
         setRefreshing(false);
     }, []);
 
@@ -112,7 +114,7 @@ const TransactionDetailScreen = () => {
     const renderItem = ({ item }: any) => (
         <TouchableOpacity
             onPress={() => openSheet(item.type, item)}
-            onLongPress={() => openDeleteSheet(item)}
+            onLongPress={() => (!paymentType ? openDeleteSheet(item) : null)}
             style={[styles.transactionRow, { backgroundColor: theme.card }]}
         >
             <View style={[styles.dateBox, { backgroundColor: theme.primary }]}>
@@ -124,34 +126,6 @@ const TransactionDetailScreen = () => {
                 <Text style={[styles.transactionDesc, { color: theme.text }]}>
                     {item.description}
                 </Text>
-                {/* <Text style={[styles.transactionType, { color: theme.textMuted }]}>{item.type.toUpperCase()}</Text> */}
-                {item.productDetails?.length > 0 &&
-                    item.productDetails.map((product: any, index: number) => (
-                        <Text
-                            key={index}
-                            style={[
-                                styles.productItem,
-                                { color: theme.textMuted }
-                            ]}
-                        >
-                            • {product.productName}
-                        </Text>
-                    ))}
-                {item.productDetails?.length > 0 &&
-                    item.productDetails.map((product: any, index: number) => (
-                        <Text
-                            key={index}
-                            style={[
-                                styles.balanceTag,
-                                {
-                                    backgroundColor: theme.background,
-                                    color: theme.textThirdForGreen
-                                }
-                            ]}
-                        >
-                            Quantity: {product.quantity || '0'}
-                        </Text>
-                    ))}
             </View>
 
             <View
@@ -193,23 +167,6 @@ const TransactionDetailScreen = () => {
             </View>
         </TouchableOpacity>
     );
-
-    if (!transaction) {
-        return (
-            <View
-                style={[
-                    styles.container,
-                    {
-                        backgroundColor: theme.background,
-                        justifyContent: 'center',
-                        alignItems: 'center'
-                    }
-                ]}
-            >
-                <Text style={{ color: theme.text }}>No transaction found.</Text>
-            </View>
-        );
-    }
 
     return (
         <SafeAreaView
@@ -366,7 +323,7 @@ const TransactionDetailScreen = () => {
                     </Text>
                 </View>
             )}
-            {!paymentType && (
+            {paymentType !== 'SALARY' && (
                 <View
                     style={[
                         styles.buttonRow,

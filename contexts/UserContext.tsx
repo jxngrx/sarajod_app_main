@@ -34,7 +34,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
             }
         } catch (error) {
             console.error('Error fetching user details:', error);
-            signOut();
+            await signOut();
         } finally {
             setLoading(false);
         }

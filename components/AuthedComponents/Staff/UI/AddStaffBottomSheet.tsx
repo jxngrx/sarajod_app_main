@@ -6,7 +6,9 @@ import {
     TouchableOpacity,
     StyleSheet,
     ScrollView,
-    Platform
+    Platform,
+    ActivityIndicator,
+    KeyboardTypeOptions
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -33,6 +35,7 @@ const AddStaffBottomSheet = ({
         return today.toISOString().split('T')[0]; // format: YYYY-MM-DD
     };
 
+    const [loading, setLoading] = useState(false);
     const [form, setForm] = useState({
         name: '',
         role: '',
@@ -53,40 +56,71 @@ const AddStaffBottomSheet = ({
         { label: 'Daily', value: 'daily' }
     ];
 
+    const formFields: {
+        label: string;
+        key: keyof typeof form;
+        keyboardType?: KeyboardTypeOptions;
+    }[] = [
+        { label: 'Full Name', key: 'name' },
+        { label: 'Role', key: 'role' },
+        { label: 'Salary', key: 'salary', keyboardType: 'numeric' },
+        { label: 'Phone', key: 'phone' },
+        { label: 'Email', key: 'email' }
+    ];
+
     const handleChange = (key: string, value: any) => {
         setForm((prev) => ({ ...prev, [key]: value }));
     };
 
     const handleSubmit = async () => {
-        const payload = {
-            ...form,
-            salary: Number(form.salary),
-            salaryCycle: dropdownValue,
-            contactInfo: {
-                phone: form.phone,
-                email: form.email
-            },
-            profileId,
-            transactionCollectionId
-        };
-        const response = await apiService.addStaffMember(payload);
-        if (response.status === 201) {
+        if (
+            !form.name ||
+            !form.email ||
+            !form.phone ||
+            !form.role ||
+            !form.salary
+        ) {
             Toast.show({
-                type: ALERT_TYPE.SUCCESS,
-                title: 'Success',
-                textBody: 'New Staff Member Added!'
+                type: ALERT_TYPE.WARNING,
+                title: 'Warning',
+                textBody: 'Please fill all the fields'
             });
-            await dispatch(fetchAllStaff());
-            setForm({
-                email: '',
-                joiningDate: '',
-                name: '',
-                phone: '',
-                role: '',
-                salary: '',
-                salaryCycle: 'monthly'
-            });
-            sheetRef?.current?.close();
+            return;
+        }
+        setLoading(true);
+        try {
+            const payload = {
+                ...form,
+                salary: Number(form.salary),
+                salaryCycle: dropdownValue,
+                contactInfo: {
+                    phone: form.phone,
+                    email: form.email
+                },
+                profileId,
+                transactionCollectionId
+            };
+            const response = await apiService.addStaffMember(payload);
+            if (response.status === 201) {
+                Toast.show({
+                    type: ALERT_TYPE.SUCCESS,
+                    title: 'Success',
+                    textBody: 'New Staff Member Added!'
+                });
+                await dispatch(fetchAllStaff());
+                setForm({
+                    email: '',
+                    joiningDate: '',
+                    name: '',
+                    phone: '',
+                    role: '',
+                    salary: '',
+                    salaryCycle: 'monthly'
+                });
+                sheetRef?.current?.close();
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -104,6 +138,7 @@ const AddStaffBottomSheet = ({
         <RBSheet
             ref={sheetRef}
             height={hp(85)}
+            closeOnPressBack
             customStyles={{
                 container: {
                     backgroundColor: theme.background,
@@ -120,13 +155,7 @@ const AddStaffBottomSheet = ({
                 nestedScrollEnabled
                 showsVerticalScrollIndicator={false}
             >
-                {[
-                    { label: 'Full Name', key: 'name' },
-                    { label: 'Role', key: 'role' },
-                    { label: 'Salary', key: 'salary', keyboardType: 'numeric' },
-                    { label: 'Phone', key: 'phone' },
-                    { label: 'Email', key: 'email' }
-                ].map(({ label, key, keyboardType }: any) => (
+                {formFields.map(({ label, key, keyboardType }) => (
                     <TextInput
                         key={key}
                         placeholder={label}
@@ -198,8 +227,25 @@ const AddStaffBottomSheet = ({
                         { backgroundColor: theme.primary }
                     ]}
                     onPress={handleSubmit}
+                    disabled={loading}
                 >
-                    <Text style={[styles.submitText]}>Add Staff</Text>
+                    {loading ? (
+                        <View
+                            style={{
+                                flexDirection: 'row',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <ActivityIndicator
+                                size="small"
+                                color="#fff"
+                                style={{ marginRight: 8 }}
+                            />
+                            <Text style={[styles.submitText]}>Adding...</Text>
+                        </View>
+                    ) : (
+                        <Text style={[styles.submitText]}>Add Staff</Text>
+                    )}
                 </TouchableOpacity>
             </ScrollView>
         </RBSheet>

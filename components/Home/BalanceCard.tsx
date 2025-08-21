@@ -2,13 +2,20 @@ import { useAppSelector } from '@/store/hooks';
 import { selectUser, selectProfileSelected } from '@/store/slices/userSlice';
 import { convertToIndianNumbering } from '@/utils/ConvertToIndianNumbering';
 import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Platform,
+    TouchableOpacity
+} from 'react-native';
 import {
     widthPercentageToDP as wp,
     heightPercentageToDP as hp
 } from 'react-native-responsive-screen';
 import { useTheme } from '@/contexts/ThemeProvider';
 import useTrans from '@/hooks/useLanguage';
+import DummyUPILink from '../UPITESTING';
 
 export const BalanceCard = () => {
     const user = useAppSelector(selectUser);
@@ -73,6 +80,7 @@ export const BalanceCard = () => {
                             </Text>
                         </View>
                     </View>
+                    {/* <DummyUPILink /> */}
                 </View>
             )}
         </View>
@@ -83,7 +91,7 @@ const getStyles = (theme: any) =>
     StyleSheet.create({
         wrapper: {
             position: 'absolute',
-            top: -hp(9),
+            top: -hp(11),
             width: '100%',
             alignItems: 'center',
             zIndex: 5
